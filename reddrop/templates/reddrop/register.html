@@ -1,0 +1,72 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}Inscription {{ role }} — RedDrop{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+
+  <!-- Header Section -->
+  <div class="ls-in" style="text-align: center; margin-bottom: 3rem;">
+    <div style="width: 80px; height: 80px; background: var(--ls-panel); border: 1px solid var(--ls-border); border-radius: 20px; 
+                display: inline-flex; align-items: center; justify-content: center; 
+                font-size: 2rem; color: var(--ls-red); margin-bottom: 1.5rem;
+                box-shadow: var(--ls-shadow);">
+      <i class="fas {% if role == 'Hôpital' %}fa-hospital{% else %}fa-tint{% endif %}"></i>
+    </div>
+    <h2 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 0.5rem;">
+      Rejoignez <span style="color: var(--ls-red);">RedDrop</span>
+    </h2>
+    <p style="color: var(--ls-muted); font-size: 1rem; max-width: 500px; margin: 0 auto;">
+      Créez votre compte <strong>{{ role }}</strong> et intégrez le réseau d'urgence vital.
+    </p>
+  </div>
+
+  <!-- Registration Panel -->
+  <div class="ls-panel ls-in-2" style="box-shadow: var(--ls-shadow);">
+    <div class="ls-panel-head">
+      <h6><i class="fas fa-id-card" style="margin-right: 8px;"></i> Formulaire d'inscription</h6>
+    </div>
+    <div class="ls-panel-body" style="padding: 2.5rem;">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <div class="row g-4">
+          {% for field in form %}
+          <div class="col-md-6">
+            <div class="ls-field">
+              <label class="ls-label" for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color: var(--ls-red);">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="ls-field-error"><i class="fas fa-exclamation-circle"></i> {{ field.errors|join:', ' }}</div>
+              {% endif %}
+              {% if field.help_text %}
+              <div class="ls-field-help">{{ field.help_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <button type="submit" class="ls-btn ls-btn-primary ls-btn-lg ls-btn-full">
+            <i class="fas fa-user-plus"></i> Finaliser l'inscription
+          </button>
+        </div>
+      </form>
+
+      <hr class="ls-divider" style="margin: 2.5rem 0;">
+
+      <div style="text-align: center;">
+        <p style="color: var(--ls-muted); font-size: 0.9rem;">
+          Déjà membre ? 
+          <a href="{% url 'blood_login' %}" style="color: var(--ls-red); font-weight: 700; text-decoration: underline;">Connectez-vous ici</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

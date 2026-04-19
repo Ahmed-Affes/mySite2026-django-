@@ -1,0 +1,311 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- ── Page Header ──────────────────────────────────── -->
+  <div class="page-header">
+    <h2>
+      <span class="icon-badge"><i class="fas fa-chart-line"></i></span>
+      Tableau de bord
+    </h2>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+
+      <!-- Role badge -->
+      {% if request.user.is_superuser %}
+      <span class="badge bg-danger px-3 py-2">
+        <i class="fas fa-shield-alt me-1"></i>Administrateur
+      </span>
+      {% elif request.user.is_staff or is_employe_user %}
+      <span class="badge bg-info px-3 py-2">
+        <i class="fas fa-user-tie me-1"></i>Employé
+      </span>
+      {% else %}
+      <span class="badge bg-success px-3 py-2">
+        <i class="fas fa-user me-1"></i>Client
+      </span>
+      {% endif %}
+
+      <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
+        <i class="fas fa-sync-alt"></i> Actualiser
+      </button>
+
+      <!-- Admin-only: add product button -->
+      {% if request.user.is_superuser or request.user.is_staff %}
+      <a href="/magasin/produit/add/" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus"></i> Ajouter un produit
+      </a>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ── CLIENT VIEW: simplified dashboard ────────────── -->
+  {% if not request.user.is_staff and not request.user.is_superuser and not is_employe_user %}
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card text-center py-4" style="border-top:3px solid var(--navy);">
+        <div class="card-body">
+          <i class="fas fa-shopping-bag fa-2x mb-3" style="color:var(--navy);"></i>
+          <h5 class="fw-bold">Catalogue</h5>
+          <p class="text-muted small">Parcourez nos produits et ajoutez-les à votre panier.</p>
+          <a href="{% url 'index' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-arrow-right"></i> Voir le catalogue
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card text-center py-4" style="border-top:3px solid var(--coral);">
+        <div class="card-body">
+          <i class="fas fa-shopping-cart fa-2x mb-3" style="color:var(--coral);"></i>
+          <h5 class="fw-bold">Mon Panier</h5>
+          <p class="text-muted small">Consultez et gérez vos articles sélectionnés.</p>
+          <a href="{% url 'panier_voir' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-arrow-right"></i> Mon panier
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    Bienvenue <strong>{{ request.user.username }}</strong> ! Vous êtes connecté en tant que client.
+    Pour accéder aux fonctions avancées (gestion des stocks, fournisseurs…), contactez un administrateur.
+  </div>
+
+  {% else %}
+  <!-- ── STAFF / ADMIN VIEW ──────────────────────────── -->
+
+  <!-- Stat Cards -->
+  <div class="row g-4 mb-4 stagger">
+    <div class="col-sm-6 col-lg-4">
+      <div class="stat-card stat-card-navy">
+        <div class="stat-number">{{ total_products }}</div>
+        <div class="stat-label"><i class="fas fa-box me-1"></i>Produits</div>
+        <div class="stat-icon"><i class="fas fa-cube"></i></div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+      <div class="stat-card stat-card-coral">
+        <div class="stat-number">{{ total_categories }}</div>
+        <div class="stat-label"><i class="fas fa-tags me-1"></i>Catégories</div>
+        <div class="stat-icon"><i class="fas fa-tag"></i></div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+      <div class="stat-card stat-card-mint">
+        <div class="stat-number">{{ total_fournisseurs }}</div>
+        <div class="stat-label"><i class="fas fa-truck me-1"></i>Fournisseurs</div>
+        <div class="stat-icon"><i class="fas fa-truck"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-chart-bar me-2 text-muted"></i>Évolution des produits
+        </div>
+        <div class="card-body">
+          <canvas id="salesChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="fas fa-chart-pie me-2 text-muted"></i>Répartition par catégorie
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Products + Alerts -->
+  <div class="row g-4">
+
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-clock me-2 text-muted"></i>Derniers produits ajoutés</span>
+          <a href="{% url 'index' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-eye"></i> Voir tout
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_products %}
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Catégorie</th>
+                  <th>Prix</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for product in recent_products %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="avatar-circle" style="width:32px;height:32px;font-size:0.75rem;">
+                        {{ product.libelle|first|upper }}
+                      </div>
+                      <span class="fw-semibold">{{ product.libelle }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">
+                      {% if product.categorie %}{{ product.categorie.name }}{% else %}—{% endif %}
+                    </span>
+                  </td>
+                  <td><strong>{{ product.prix }} DT</strong></td>
+                  <td>
+                    <a href="{% url 'detail' product.id %}" class="btn btn-outline-primary btn-sm">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-box-open fa-2x mb-2 opacity-50"></i><br>
+            Aucun produit récent
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-bell me-2 text-muted"></i>Alertes & Système
+        </div>
+        <div class="card-body d-flex flex-column gap-2">
+
+          {% if low_stock %}
+          <div class="alert alert-warning mb-0">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Stock faible :</strong> {{ low_stock|length }} produit(s) à réapprovisionner
+          </div>
+          {% else %}
+          <div class="alert alert-success mb-0">
+            <i class="fas fa-check-circle"></i>
+            Tous les niveaux de stock sont corrects
+          </div>
+          {% endif %}
+
+          <div class="alert alert-success mb-0">
+            <i class="fas fa-database"></i>
+            Base de données synchronisée
+          </div>
+
+          <div class="alert alert-info mb-0">
+            <i class="fas fa-user-circle"></i>
+            Connecté : <strong>{{ request.user.username }}</strong>
+            ({% if request.user.is_superuser %}Admin{% elif request.user.is_staff %}Staff{% else %}Employé{% endif %})
+          </div>
+
+          <!-- Admin-only admin panel link -->
+          {% if request.user.is_superuser %}
+          <div class="alert mb-0" style="background:rgba(236,72,153,0.08);border-left:3px solid var(--danger);">
+            <i class="fas fa-shield-alt" style="color:var(--danger);"></i>
+            <a href="/admin/" target="_blank" class="fw-bold text-decoration-none" style="color:var(--danger);">
+              Ouvrir le panneau d'administration Django →
+            </a>
+          </div>
+          {% endif %}
+
+          <div class="divider my-1"></div>
+
+          <div class="d-grid gap-2">
+            <a href="{% url 'toutes_commandes' %}" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-boxes me-1"></i>Toutes les commandes
+            </a>
+            <a href="{% url 'fournisseurs' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="fas fa-truck me-1"></i>Gérer les fournisseurs
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if request.user.is_staff or request.user.is_superuser or is_employe_user %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const isDark    = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#E5E7EB' : '#1A202C';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  var totalProducts = parseInt("{{ total_products }}", 10) || 0;
+
+  window.salesChart = new Chart(document.getElementById('salesChart'), {
+    type: 'line',
+    data: {
+      labels: ['Jan','Fév','Mar','Avr','Mai','Juin'],
+      datasets: [{
+        label: 'Produits',
+        data: [4, 7, 5, 10, 8, totalProducts],
+        borderColor: '#7C3AED',
+        backgroundColor: 'rgba(124,58,237,0.10)',
+        borderWidth: 2.5, tension: 0.45, fill: true,
+        pointBackgroundColor: '#7C3AED', pointRadius: 4, pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+        x: { grid: { display: false }, ticks: { color: textColor } }
+      }
+    }
+  });
+
+  window.categoryChart = new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Alimentaire','Meuble','Vêtement','Autres'],
+      datasets: [{
+        data: [30, 20, 25, 25],
+        backgroundColor: ['#5B21B6','#EC4899','#A855F7','#F472B6'],
+        borderWidth: 2, borderColor: isDark ? '#130020' : '#FFFFFF',
+      }]
+    },
+    options: {
+      responsive: true, cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { padding: 14, font: { size: 11 }, color: textColor }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

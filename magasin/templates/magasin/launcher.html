@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Choix d'application{% endblock title %}
+
+{% block content %}
+<header class="page-header">
+    <div class="container">
+        <p class="page-header__eyebrow">Bienvenue</p>
+        <h1 class="page-header__title">Sélectionnez votre application</h1>
+        <p class="lead">Choisissez le module que vous souhaitez ouvrir : le magasin existant ou la nouvelle application.</p>
+    </div>
+</header>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm p-4">
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'index' %}" class="btn btn-primary btn-lg">Ouvrir le magasin</a>
+                        <a href="{% url 'blood_home' %}" class="btn btn-outline-secondary btn-lg">Ouvrir Banque Sang</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

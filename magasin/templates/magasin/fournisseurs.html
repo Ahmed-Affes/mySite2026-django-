@@ -1,0 +1,233 @@
+﻿{% extends 'magasin/base.html' %}
+
+{% block title %}Fournisseurs — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- ── Page Header ──────────────────────────────────── -->
+  <div class="page-header">
+    <h2>
+      <span class="icon-badge"><i class="fas fa-truck"></i></span>
+      Gestion des Fournisseurs
+    </h2>
+    <a class="btn btn-primary" href="{% url 'fournisseur_create' %}">
+      <i class="fas fa-plus"></i>Nouveau fournisseur
+    </a>
+  </div>
+
+  <!-- ── Stat Cards ───────────────────────────────────── -->
+  <div class="row g-3 mb-4 stagger">
+    <div class="col-sm-4">
+      <div class="stat-card stat-card-navy">
+        <div class="stat-number">{{ total_fournisseurs }}</div>
+        <div class="stat-label"><i class="fas fa-truck me-1"></i>Fournisseurs actifs</div>
+        <div class="stat-icon"><i class="fas fa-truck"></i></div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="stat-card stat-card-coral">
+        <div class="stat-number">{{ total_products|default:"0" }}</div>
+        <div class="stat-label"><i class="fas fa-box me-1"></i>Produits fournis</div>
+        <div class="stat-icon"><i class="fas fa-box"></i></div>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="stat-card stat-card-mint">
+        <div class="stat-number" style="font-size:1.2rem;word-break:break-all;">
+          {{ derniere_activite|default:"—"|truncatechars:12 }}
+        </div>
+        <div class="stat-label"><i class="fas fa-clock me-1"></i>Dernier fournisseur</div>
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Search & Actions ─────────────────────────────── -->
+  <div class="d-flex flex-wrap gap-2 mb-3 justify-content-between align-items-center">
+    <form method="get" class="d-flex gap-2" style="flex:1;max-width:420px;">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search text-muted"></i></span>
+        <input type="text" name="search" class="form-control"
+               placeholder="Rechercher un fournisseur…" value="{{ search }}">
+        <button type="submit" class="btn btn-primary">Chercher</button>
+      </div>
+    </form>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-success btn-sm" onclick="exportCSV()">
+        <i class="fas fa-file-csv me-1"></i>CSV
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>Imprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Table ────────────────────────────────────────── -->
+  <div class="table-wrapper">
+    <table class="table table-hover mb-0" id="fournisseurTable">
+      <thead>
+        <tr>
+          <th>Fournisseur</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Adresse</th>
+          <th>Produits</th>
+          <th>Statut</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fournisseurs %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="avatar-circle">{{ f.nom|first|upper }}</div>
+              <div>
+                <div class="fw-semibold">{{ f.nom }}</div>
+                <small class="text-muted">ID: F{{ f.id|stringformat:"04d" }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <a href="mailto:{{ f.email }}" class="text-decoration-none text-muted small">
+              <i class="fas fa-envelope me-1"></i>{{ f.email }}
+            </a>
+          </td>
+          <td>
+            <a href="tel:{{ f.telephone }}" class="text-decoration-none text-muted small">
+              <i class="fas fa-phone me-1"></i>{{ f.telephone }}
+            </a>
+          </td>
+          <td class="text-muted small">
+            <i class="fas fa-map-marker-alt me-1"></i>{{ f.adresse|truncatechars:28 }}
+          </td>
+          <td><span class="badge bg-info">{{ f.produits_count }}</span></td>
+          <td><span class="badge bg-success">Actif</span></td>
+          <td class="text-end">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'fournisseur_edit' f.id %}"
+                 class="btn btn-warning btn-sm"
+                 data-bs-toggle="tooltip" title="Modifier">
+                <i class="fas fa-edit"></i>
+              </a>
+              <button type="button"
+                      class="btn btn-danger btn-sm"
+                      data-bs-toggle="modal"
+                      data-bs-target="#deleteModal"
+                      data-id="{{ f.id }}"
+                      data-nom="{{ f.nom }}"
+                      data-url="{% url 'fournisseur_delete' f.id %}"
+                      title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">
+            <i class="fas fa-truck fa-3x mb-2 opacity-40"></i><br>
+            <strong>Aucun fournisseur trouvé</strong><br>
+            <small>Ajoutez votre premier fournisseur ou modifiez la recherche.</small>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if fournisseurs.has_other_pages %}
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if fournisseurs.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ fournisseurs.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+          <i class="fas fa-angle-left"></i>
+        </a>
+      </li>
+      {% endif %}
+      {% for num in fournisseurs.paginator.page_range %}
+        {% if num == fournisseurs.number %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > fournisseurs.number|add:'-3' and num < fournisseurs.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+      {% endfor %}
+      {% if fournisseurs.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ fournisseurs.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+          <i class="fas fa-angle-right"></i>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+
+<!-- ── Delete Confirmation Modal ────────────────────── -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-danger fw-bold">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">
+          Supprimer le fournisseur
+          <strong id="deleteModalName" class="text-danger"></strong> ?<br>
+          <small class="text-muted">Cette action est irréversible.</small>
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form id="deleteForm" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-1"></i>Supprimer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  // Wire modal
+  document.getElementById('deleteModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('deleteModalName').textContent = btn.dataset.nom;
+    document.getElementById('deleteForm').action = btn.dataset.url;
+  });
+
+  // CSV export (skip Actions column)
+  function exportCSV() {
+    const table = document.getElementById('fournisseurTable');
+    const rows  = [...table.querySelectorAll('tr')];
+    const csv   = rows.map(row => {
+      const cells = [...row.querySelectorAll('th,td')];
+      return cells.slice(0, cells.length - 1)
+        .map(c => `"${c.innerText.trim().replace(/"/g,'""')}"`)
+        .join(',');
+    }).join('\n');
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+    a.download = 'fournisseurs.csv';
+    document.body.appendChild(a);
+    a.click(); a.remove();
+    showToast('Export CSV réussi !', 'success');
+  }
+</script>
+{% endblock %}
+
+{% endblock %}

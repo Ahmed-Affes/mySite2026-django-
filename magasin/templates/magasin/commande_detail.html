@@ -1,0 +1,122 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Commande #{{ commande.id }} — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-box me-2"></i>Commande #{{ commande.id }}</h2>
+    {% if request.user.is_superuser or request.user.is_staff or is_employe_user %}
+    <a href="{% url 'toutes_commandes' %}" class="btn btn-outline-primary">
+      <i class="fas fa-arrow-left me-1"></i> Retour
+    </a>
+    {% else %}
+    <a href="{% url 'mes_commandes' %}" class="btn btn-outline-primary">
+      <i class="fas fa-arrow-left me-1"></i> Retour
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Produits commandés</h5>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Produit</th>
+                <th>Prix</th>
+                <th>Quantité</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for produit in commande.produits.all %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    {% if produit.image %}
+                    <img src="{{ produit.image }}" alt="{{ produit.libelle }}" style="width:40px;height:40px;object-fit:cover;" class="rounded">
+                    {% endif %}
+                    <a href="{% url 'detail' produit.id %}">{{ produit.libelle }}</a>
+                  </div>
+                </td>
+                <td>{{ produit.prix }} DT</td>
+                <td>1</td>
+                <td>{{ produit.prix }} DT</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-info-circle me-1"></i>Détails</h5>
+        </div>
+        <div class="card-body">
+          <p><i class="fas fa-calendar me-2"></i>Date: {{ commande.dateCde|date:"d/m/Y" }}</p>
+          <p><i class="fas fa-dollar-sign me-2"></i>Total: <span class="fs-5 fw-bold">{{ commande.totalCde }} DT</span></p>
+        </div>
+      </div>
+
+      <!-- Client Info (Admin Only) -->
+      {% if request.user.is_superuser or request.user.is_staff or is_employe_user %}
+      <div class="card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Informations Client</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-2"><strong>Utilisateur :</strong> {{ commande.client.username }}</p>
+          <p class="mb-2"><strong>ID Client :</strong> #{{ commande.client.id }}</p>
+          <p class="mb-0"><strong>Inscrit le :</strong> {{ commande.client.date_joined|date:"d/m/Y" }}</p>
+          <hr class="my-3 border-secondary" style="opacity: 0.1;">
+          <h6 class="mb-3 text-muted"><i class="fas fa-truck me-2"></i>Infos de Livraison</h6>
+          <p class="mb-2"><strong>Adresse :</strong> {{ commande.adresse_livraison|default:"<span class='text-muted'>Non renseignée</span>"|safe }}</p>
+          <p class="mb-2"><strong>Téléphone :</strong> {{ commande.telephone_contact|default:"<span class='text-muted'>Non renseigné</span>"|safe }}</p>
+          <p class="mb-0"><strong>Email :</strong> {% if commande.email_contact %}<a href="mailto:{{ commande.email_contact }}">{{ commande.email_contact }}</a>{% else %}<span class='text-muted'>Non renseigné</span>{% endif %}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Statut</h5>
+        </div>
+        <div class="card-body text-center">
+          <span class="badge fs-6
+            {% if commande.status == 'livree' %}bg-success
+            {% elif commande.status == 'expediee' %}bg-info
+            {% elif commande.status == 'en_preparation' %}bg-warning
+            {% elif commande.status == 'annulee' %}bg-danger
+            {% else %}bg-secondary{% endif %}">
+            {{ commande.get_status_display }}
+          </span>
+
+          <div class="mt-3">
+            <small class="text-muted">Historique du statut:</small>
+            <ul class="list-unstyled small mt-2">
+              <li><i class="fas fa-check text-success me-1"></i> Commande passée</li>
+              {% if commande.status != 'annulee' %}
+              <li><i class="fas {% if commande.status != 'en_attente' %}fa-check{% endif %} text-muted me-1"></i> Confirmée</li>
+              <li><i class="fas {% if commande.status == 'en_preparation' or commande.status == 'expediee' or commande.status == 'livree' %}fa-check{% endif %} text-muted me-1"></i> En préparation</li>
+              <li><i class="fas {% if commande.status == 'expediee' or commande.status == 'livree' %}fa-check{% endif %} text-muted me-1"></i> Expédiée</li>
+              <li><i class="fas {% if commande.status == 'livree' %}fa-check{% endif %} text-muted me-1"></i> Livrée</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

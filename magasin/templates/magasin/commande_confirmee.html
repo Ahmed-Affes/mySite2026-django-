@@ -1,0 +1,79 @@
+{% extends 'magasin/base.html' %}
+
+{% block title %}Commande confirmée — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+
+      <!-- ── Success Card ──────────────────────────────── -->
+      <div class="card text-center" style="border-top: 4px solid var(--success);">
+        <div class="card-body p-5">
+
+          <!-- Animated checkmark -->
+          <div class="mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                 style="width:90px;height:90px;background:rgba(34,201,122,0.12);">
+              <i class="fas fa-check-circle fa-3x" style="color:var(--success);"></i>
+            </div>
+            <h3 class="fw-bold mb-1">Commande confirmée !</h3>
+            <p class="text-muted">
+              Votre commande <strong>#{{ commande.id }}</strong> a été enregistrée avec succès.
+            </p>
+          </div>
+
+          <!-- Order summary -->
+          <div class="card border-0 mb-4" style="background:var(--bg-page);">
+            <div class="card-body py-3">
+
+              <div class="d-flex justify-content-between small mb-2">
+                <span class="text-muted">Numéro de commande</span>
+                <span class="fw-bold">#{{ commande.id }}</span>
+              </div>
+
+              <div class="d-flex justify-content-between small mb-2">
+                <span class="text-muted">Date</span>
+                <span class="fw-semibold">{{ commande.dateCde }}</span>
+              </div>
+
+              <div class="divider my-2"></div>
+
+              {% for produit in commande.produits.all %}
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">{{ produit.libelle }}</span>
+                <span>{{ produit.prix }} DT</span>
+              </div>
+              {% endfor %}
+
+              <div class="divider my-2"></div>
+
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Total</span>
+                <span style="color:var(--navy);">{{ commande.totalCde }} DT</span>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="alert alert-success mb-4">
+            <i class="fas fa-truck me-2"></i>
+            Votre commande sera traitée et livrée dans les meilleurs délais.
+          </div>
+
+          <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="{% url 'index' %}" class="btn btn-primary">
+              <i class="fas fa-shopping-bag me-2"></i>Continuer les achats
+            </a>
+            <a href="{% url 'mes_commandes' %}" class="btn btn-outline-primary">
+              <i class="fas fa-list me-2"></i>Mes commandes
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

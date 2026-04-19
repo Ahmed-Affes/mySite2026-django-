@@ -1,0 +1,49 @@
+{% extends 'reddrop/base.html' %}
+{% block title %}Messages — RedDrop{% endblock %}
+
+{% block content %}
+<div class="ls-in" style="max-width:800px; margin:0 auto;">
+  <div style="margin-bottom:2rem;">
+    <p class="ls-section-title">Messagerie</p>
+    <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">Mes Conversations</h1>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:1rem;">
+    {% if contacts %}
+      {% for contact in contacts %}
+      <div style="display:flex; align-items:stretch; gap:0.75rem;">
+        <!-- The Chat Card -->
+        <a href="{% url 'view_conversation' contact.id %}" 
+           style="flex-grow:1; display:flex; align-items:center; gap:1.25rem; text-decoration:none; padding:1.25rem 1.75rem; background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:18px; transition:all 0.3s ease; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+          
+          <div class="ls-avatar" style="width:45px; height:45px; font-size:1.1rem; flex-shrink:0;">
+            {{ contact.username|slice:":1"|upper }}
+          </div>
+          
+          <div style="flex-grow:1; min-width:0;">
+            <div style="font-weight:700; font-size:1.05rem; color:var(--ls-text); margin-bottom:2px;">{{ contact.username }}</div>
+            <div style="font-size:0.78rem; color:var(--ls-muted); opacity:0.8;">Cliquer pour ouvrir le chat</div>
+          </div>
+          
+          <i class="fas fa-chevron-right" style="color:var(--ls-red); font-size:0.9rem; opacity:0.6;"></i>
+        </a>
+        
+        <!-- The Delete Button -->
+        <a href="{% url 'delete_conversation' contact.id %}" 
+           class="ls-btn ls-btn-ghost" 
+           style="color:var(--ls-red); background:rgba(255,59,48,0.05); border:1px solid var(--ls-border); border-radius:18px; width:65px; display:flex; align-items:center; justify-content:center; transition:0.2s;"
+           onclick="return confirm('Supprimer définitivement cette conversation ?')">
+          <i class="fas fa-trash-alt"></i>
+        </a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="ls-empty" style="padding:5rem 2rem; background:var(--ls-surface); border:1px dashed var(--ls-border); border-radius:24px;">
+        <div class="ls-empty-icon" style="font-size:3rem; margin-bottom:1.5rem; color:var(--ls-muted);"><i class="fas fa-comments"></i></div>
+        <h3 style="color:var(--ls-text); margin-bottom:0.5rem;">Aucun message</h3>
+        <p style="font-size:0.9rem; color:var(--ls-muted);">Les conversations apparatront ici une fois qu'un message sera envoy.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

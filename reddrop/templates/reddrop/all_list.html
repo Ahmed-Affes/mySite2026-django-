@@ -1,0 +1,122 @@
+{% extends 'reddrop/base.html' %}
+{% block title %}{{ title }} — RedDrop{% endblock %}
+
+{% block extra_css %}
+<style>
+  .table {
+    margin: 0 !important;
+    background-color: transparent !important;
+    color: var(--ls-text) !important;
+    border-color: var(--ls-border) !important;
+  }
+  .table thead {
+    background: rgba(255, 255, 255, 0.03) !important;
+  }
+  .table thead th {
+    background: none !important;
+    border: none !important;
+    padding: 1.25rem 1.5rem !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: var(--ls-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+  }
+  .table tbody td {
+    background: none !important;
+    border-top: 1px solid var(--ls-border) !important;
+    padding: 1.25rem 1.5rem !important;
+    color: var(--ls-text) !important;
+    vertical-align: middle !important;
+  }
+  .table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02) !important;
+  }
+  .table-responsive {
+    border: none !important;
+    border-radius: var(--ls-radius);
+    overflow: hidden;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ls-in">
+  <div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end;">
+    <div>
+      <p class="ls-section-title">Gestion complète</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">{{ title }}</h1>
+    </div>
+    <a href="{% url 'blood_dashboard' %}" class="ls-btn ls-btn-ghost">
+      <i class="fas fa-arrow-left"></i> Retour au Dashboard
+    </a>
+  </div>
+
+  <div class="ls-panel">
+    <div class="ls-panel-body flush">
+      {% if items %}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                {% if type == 'rdv' %}
+                  <th>Date & Heure</th>
+                  <th>Partenaire</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                {% else %}
+                  <th>Nom</th>
+                  <th>Date</th>
+                  <th>Occupation</th>
+                  <th>Actions</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              <tr>
+                {% if type == 'rdv' %}
+                  <td>{{ item.date_heure|date:"d/m/Y H:i" }}</td>
+                  <td>
+                    {% if user.donneur_banque %}
+                      {{ item.hopital.nom }}
+                    {% else %}
+                      {{ item.donneur.user.username }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="ls-pill {% if item.statut == 'P' %}ls-pill-orange{% elif item.statut == 'H' %}ls-pill-teal{% else %}ls-pill-grey{% endif %}">
+                      {{ item.get_statut_display }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if item.statut == 'P' %}
+                      {% if user.hopital_banque %}
+                        <a href="{% url 'update_rdv_status' item.pk 'H' %}" class="ls-btn ls-btn-primary ls-btn-sm">Confirmer</a>
+                      {% endif %}
+                      <a href="{% url 'cancel_rendezvous' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red);">Annuler</a>
+                    {% endif %}
+                  </td>
+                {% else %}
+                  <td>{{ item.nom }}</td>
+                  <td>{{ item.date|date:"d/m/Y" }}</td>
+                  <td>{{ item.places_prises }} / {{ item.capacite_totale }}</td>
+                  <td>
+                    <a href="{% url 'edit_campaign' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'delete_campaign' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red);"><i class="fas fa-trash"></i></a>
+                  </td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="ls-empty" style="padding:4rem;">
+          <p>Aucun élément trouvé.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,465 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}Dashboard — BloodConnect{% endblock %}
+
+{% block content %}
+
+{% if type == 'donneur' %}
+<!-- ════ DONNEUR DASHBOARD ════ -->
+
+<!-- Greeting -->
+<div class="ls-in" style="margin-bottom: 2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Donneur</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">
+        Bonjour, <span style="color:var(--ls-red);">{{ donneur.user.username }}</span> 👋
+      </h1>
+    </div>
+    <a href="{% url 'blood_demandes' %}" class="ls-btn ls-btn-primary">
+      <i class="fas fa-ambulance"></i> Toutes les urgences
+    </a>
+  </div>
+</div>
+
+<!-- Stat Strip -->
+<div class="ls-stat-strip ls-in-2">
+  <div class="ls-stat">
+    <div class="ls-stat-num">{{ donneur.groupe_sanguin }}</div>
+    <div class="ls-stat-label">Groupe Sanguin</div>
+    <i class="fas fa-tint ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat teal">
+    <div class="ls-stat-num">{{ dons.count }}</div>
+    <div class="ls-stat-label">Dons réalisés</div>
+    <i class="fas fa-heart ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat orange">
+    <div class="ls-stat-num">{{ demandes_compatibles.count }}</div>
+    <div class="ls-stat-label">Urgences compatibles</div>
+    <i class="fas fa-ambulance ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat {% if donneur.est_eligible %}teal{% else %}yellow{% endif %}">
+    <div class="ls-stat-num">
+      {% if donneur.est_eligible %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-clock"></i>{% endif %}
+    </div>
+    <div class="ls-stat-label">{% if donneur.est_eligible %}Éligible maintenant{% else %}En attente{% endif %}</div>
+    <i class="fas fa-calendar ls-stat-icon"></i>
+  </div>
+</div>
+
+<!-- Main GRID: Left (Urgences) — Right (Profile + History) -->
+<div class="ls-grid-main ls-in-3">
+
+  <!-- LEFT: Urgences compatibles FIRST -->
+  <div>
+
+    <!-- Compatible Requests (LEFT) -->
+    <div class="ls-panel" style="margin-bottom:1.5rem;">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-ambulance" style="color:var(--ls-red); margin-right:8px;"></i>Demandes urgentes récentes</h6>
+        <a href="{% url 'blood_demandes' %}" class="ls-btn ls-btn-ghost ls-btn-sm">Tout voir</a>
+      </div>
+      <div class="ls-panel-body flush">
+        {% if demandes_compatibles %}
+          {% for demande in demandes_compatibles|slice:":6" %}
+          <div class="ls-request-row">
+            <div class="ls-blood-tag">{{ demande.groupe_sanguin }}</div>
+            <div style="flex-grow:1; min-width:0;">
+              <div style="font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ demande.hopital.nom }}</div>
+              <div style="font-size:0.78rem; color:var(--ls-muted); margin-top:2px;">
+                <i class="fas fa-map-marker-alt" style="color:var(--ls-red);"></i> {{ demande.ville }}
+                &nbsp;·&nbsp; {{ demande.quantite }} poche(s)
+                &nbsp;·&nbsp; {{ demande.delai }} jours
+              </div>
+            </div>
+            {% if donneur.est_eligible %}
+            <a href="{% url 'respond_request' demande.id %}" class="ls-btn ls-btn-primary ls-btn-sm" style="flex-shrink:0;">
+              Répondre
+            </a>
+            {% else %}
+            <span class="ls-pill ls-pill-orange" style="flex-shrink:0;">Non éligible</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="ls-empty">
+          <div class="ls-empty-icon"><i class="fas fa-heartbeat"></i></div>
+          <strong>Aucune urgence compatible</strong>
+          <p>Revenez ici dès qu'un hôpital publie une demande pour votre groupe sanguin.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Donation History as table (LEFT BOTTOM) -->
+    <div class="ls-panel">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-history" style="color:var(--ls-teal); margin-right:8px;"></i>Historique de mes dons</h6>
+      </div>
+      {% if dons %}
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--ls-border);">
+              <th style="padding:0.9rem 1.5rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Date</th>
+              <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Lieu</th>
+              <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Groupe</th>
+              <th style="padding:0.9rem 1.5rem 0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Qté</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for don in dons %}
+            <tr style="border-bottom:1px solid var(--ls-border); transition:background 0.15s;" onmouseover="this.style.background='var(--ls-panel)'" onmouseout="this.style.background='transparent'">
+              <td style="padding:0.85rem 1.5rem; color:var(--ls-text);">{{ don.date|date:"d/m/Y" }}</td>
+              <td style="padding:0.85rem 1rem; color:var(--ls-muted); font-size:0.83rem;">{{ don.lieu }}</td>
+              <td style="padding:0.85rem 1rem;"><span class="ls-blood-tag sm">{{ don.groupe_sanguin }}</span></td>
+              <td style="padding:0.85rem 1.5rem 0.85rem 1rem; color:var(--ls-muted);">{{ don.quantite }} p.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="ls-empty">
+        <div class="ls-empty-icon"><i class="fas fa-box-open"></i></div>
+        <p>Votre premier don apparaîtra ici.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Profile + Eligibility + Compatibility -->
+  <div>
+
+    <!-- Profile Card -->
+    <div class="ls-profile-card" style="margin-bottom:1.25rem;">
+      <div class="ls-profile-header">
+        <div class="ls-blood-tag lg">{{ donneur.groupe_sanguin }}</div>
+        <div>
+          <div style="font-weight:800; font-size:1.1rem;">{{ donneur.user.username }}</div>
+          <span class="ls-pill ls-pill-red" style="margin-top:4px; display:inline-block;">Donneur</span>
+        </div>
+      </div>
+
+      <div class="ls-info-row">
+        <i class="fas fa-city"></i>
+        <span class="ls-info-label">Ville</span>
+        <span class="ls-info-val">{{ donneur.ville }}</span>
+      </div>
+      <div class="ls-info-row">
+        <i class="fas fa-birthday-cake"></i>
+        <span class="ls-info-label">Né(e) le</span>
+        <span class="ls-info-val">{{ donneur.date_naissance|date:"d/m/Y" }}</span>
+      </div>
+      <div class="ls-info-row">
+        <i class="fas fa-tint"></i>
+        <span class="ls-info-label">Dernier don</span>
+        <span class="ls-info-val">{% if donneur.dernier_don %}{{ donneur.dernier_don|date:"d/m/Y" }}{% else %}—{% endif %}</span>
+      </div>
+      <div class="ls-eligibility {% if donneur.est_eligible %}eligible{% else %}waiting{% endif %}">
+        <i class="fas {% if donneur.est_eligible %}fa-check-circle{% else %}fa-hourglass-half{% endif %}"></i>
+        <span>{% if donneur.est_eligible %}Vous êtes <strong>éligible</strong> à donner dès maintenant !{% else %}Éligible le <strong>{{ donneur.prochain_don|date:"d/m/Y" }}</strong>{% endif %}</span>
+      </div>
+    </div>
+
+    <!-- Blood Compatibility -->
+    <div class="ls-panel">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-sitemap" style="color:var(--ls-orange); margin-right:8px;"></i>Vous pouvez donner à</h6>
+      </div>
+      <div class="ls-panel-body">
+        {% with donneur.groupe_sanguin as bg %}
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+          {% if bg == 'O-' %}{% for t in 'O-,O+,A-,A+,B-,B+,AB-,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'O+' %}{% for t in 'O+,A+,B+,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'A-' %}{% for t in 'A-,A+,AB-,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'A+' %}{% for t in 'A+,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'B-' %}{% for t in 'B-,B+,AB-,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'B+' %}{% for t in 'B+,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'AB-' %}{% for t in 'AB-,AB+'|split:',' %}<span class="ls-compat-pill">{{ t }}</span>{% endfor %}
+          {% elif bg == 'AB+' %}<span class="ls-compat-pill">AB+</span>{% endif %}
+        </div>
+        <p style="font-size:0.78rem; color:var(--ls-muted); margin-top:1rem; margin-bottom:0;">
+          Basé sur les règles universelles de compatibilité ABO/Rhésus.
+        </p>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- Vos Rendez-vous (New Enterprise Feature) -->
+    <div class="ls-panel" style="margin-top:1.25rem;">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-calendar-check" style="color:var(--ls-teal); margin-right:8px;"></i>Mes Rendez-vous</h6>
+        <a href="{% url 'all_rendezvous' %}" style="font-size:0.7rem; color:var(--ls-red); font-weight:700;">VOIR TOUT</a>
+      </div>
+      <div class="ls-panel-body flush">
+        {% if rendezvous %}
+          {% for rdv in rendezvous %}
+          <div class="ls-request-row">
+            <div style="flex-grow:1;">
+              <div style="font-weight:700; font-size:0.9rem;">{{ rdv.hopital.nom }}</div>
+              <div style="font-size:0.78rem; color:var(--ls-muted);">{{ rdv.date_heure|date:"d/m/Y H:i" }}</div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <span class="ls-pill {% if rdv.statut == 'P' %}ls-pill-orange{% elif rdv.statut == 'H' %}ls-pill-teal{% else %}ls-pill-grey{% endif %}">
+                {{ rdv.get_statut_display }}
+              </span>
+              {% if rdv.statut == 'P' %}
+              <a href="{% url 'cancel_rendezvous' rdv.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); padding:0.2rem 0.5rem;" title="Annuler">
+                <i class="fas fa-times"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="ls-empty" style="padding:1rem;">
+          <p style="margin:0; font-size:0.85rem; color:var(--ls-muted);">Aucun rendez-vous planifié.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+{% else %}
+<!-- ════ HOSPITAL DASHBOARD ════ -->
+
+<!-- Header -->
+<div class="ls-in" style="margin-bottom:2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Portail Hôpital</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">{{ hospital.nom }}</h1>
+      <div style="margin-top:0.5rem;">
+        {% if hospital.valide %}
+        <span class="ls-pill ls-pill-teal"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Validé</span>
+        {% else %}
+        <span class="ls-pill ls-pill-orange"><i class="fas fa-hourglass-half" style="margin-right:4px;"></i>En attente de validation</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a href="{% url 'publish_request' %}" class="ls-btn ls-btn-primary">
+        <i class="fas fa-plus"></i> Urgence
+      </a>
+      <a href="{% url 'publish_campaign' %}" class="ls-btn ls-btn-ghost">
+        <i class="fas fa-calendar-plus"></i> Campagne
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="ls-stat-strip ls-in-2" style="grid-template-columns:repeat(3,1fr);">
+  <div class="ls-stat">
+    <div class="ls-stat-num">{{ demandes.count }}</div>
+    <div class="ls-stat-label">Demandes Publiées</div>
+    <i class="fas fa-ambulance ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat teal">
+    <div class="ls-stat-num">{{ campagnes.count }}</div>
+    <div class="ls-stat-label">Campagnes</div>
+    <i class="fas fa-calendar ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat orange">
+    <div class="ls-stat-num">{{ demandes|length }}</div>
+    <div class="ls-stat-label">Demandes Actives</div>
+    <i class="fas fa-heartbeat ls-stat-icon"></i>
+  </div>
+</div>
+
+<!-- Grid: LEFT Requests | RIGHT Campaigns -->
+<div class="ls-grid-main ls-in-3">
+
+  <!-- LEFT: Mes Demandes & Réponses -->
+  <div>
+    <div class="ls-panel" style="margin-bottom:1.5rem;">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-ambulance" style="color:var(--ls-red); margin-right:8px;"></i>Mes demandes urgentes</h6>
+        <a href="{% url 'publish_request' %}" class="ls-btn ls-btn-primary ls-btn-sm">
+          <i class="fas fa-plus"></i> Nouvelle
+        </a>
+      </div>
+      <div class="ls-panel-body flush">
+        {% if demandes %}
+          {% for demande in demandes %}
+          <div class="ls-request-row">
+            <div class="ls-blood-tag" {% if not demande.active %}style="opacity:0.45;"{% endif %}>{{ demande.groupe_sanguin }}</div>
+            <div style="flex-grow:1; min-width:0;">
+              <div style="font-weight:700; font-size:0.9rem;">{{ demande.ville }}</div>
+              <div style="font-size:0.78rem; color:var(--ls-muted); margin-top:2px;">
+                {{ demande.quantite }} poche(s) &nbsp;·&nbsp; {{ demande.delai }} jours
+              </div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <span class="ls-pill {% if demande.active %}ls-pill-red{% else %}ls-pill-grey{% endif %}">
+                {% if demande.active %}Active{% else %}Fermée{% endif %}
+              </span>
+              <a href="{% url 'edit_request' demande.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="padding:0.2rem 0.5rem;"><i class="fas fa-edit"></i></a>
+              <a href="{% url 'delete_request' demande.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); padding:0.2rem 0.5rem;" onclick="return confirm('Supprimer cette demande ?')"><i class="fas fa-trash"></i></a>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="ls-empty">
+          <div class="ls-empty-icon"><i class="fas fa-ambulance"></i></div>
+          <strong>Aucune demande publiée</strong>
+          <p>Publiez votre primeira demande urgente.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Responses Panel -->
+    <div class="ls-panel">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-reply-all" style="color:var(--ls-orange); margin-right:8px;"></i>Réponses des donneurs</h6>
+      </div>
+      <div class="ls-panel-body flush">
+        {% if reponses_recues %}
+          {% for rep in reponses_recues %}
+          <div class="ls-request-row">
+            <div class="ls-blood-tag sm">{{ rep.donneur.groupe_sanguin }}</div>
+            <div style="flex-grow:1;">
+              <div style="font-weight:700; font-size:0.85rem;">{{ rep.donneur.user.username }}</div>
+              <div style="font-size:0.72rem; color:var(--ls-muted);">{{ rep.commentaire|truncatechars:40 }}</div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <span class="ls-pill ls-pill-teal">Réponse</span>
+              <a href="{% url 'view_conversation' rep.donneur.user.id %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="padding:0.2rem 0.5rem;" title="Contacter"><i class="fas fa-comment-dots"></i></a>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="ls-empty" style="padding:2rem;">
+          <p style="margin:0; font-size:0.85rem; color:var(--ls-muted);">Aucune réponse pour le moment.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Rendez-vous & Campagnes -->
+  <div>
+    <!-- Rendez-vous Panel -->
+    <div class="ls-panel" style="margin-bottom:1.5rem;">
+      <div class="ls-panel-head">
+        <h6><i class="fas fa-calendar-alt" style="color:var(--ls-orange); margin-right:8px;"></i>Rendez-vous Donneurs</h6>
+        <a href="{% url 'all_rendezvous' %}" style="font-size:0.7rem; color:var(--ls-red); font-weight:700;">VOIR TOUT</a>
+      </div>
+      <div class="ls-panel-body flush">
+        {% if rendezvous %}
+          {% for rdv in rendezvous %}
+          <div class="ls-request-row" style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 1.5rem; border-bottom:1px solid var(--ls-border);">
+            
+            <!-- Left: Donor Info -->
+            <div style="flex-basis:40%; min-width:0;">
+              <div style="font-weight:700; font-size:0.95rem; color:var(--ls-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ rdv.donneur.user.username }}
+              </div>
+              <div style="font-size:0.75rem; color:var(--ls-muted); margin-top:2px;">
+                <i class="far fa-clock" style="margin-right:4px;"></i>{{ rdv.date_heure|date:"d/m/Y H:i" }}
+              </div>
+            </div>
+
+            <!-- Center: Blood Tag -->
+            <div style="flex-basis:20%; display:flex; justify-content:center;">
+              <span class="ls-blood-tag sm">{{ rdv.donneur.groupe_sanguin }}</span>
+            </div>
+
+            <!-- Right: Status & Actions -->
+            <div style="flex-basis:40%; display:flex; justify-content:flex-end; align-items:center; gap:0.5rem;">
+              <span class="ls-pill {% if rdv.statut == 'P' %}ls-pill-orange{% elif rdv.statut == 'H' %}ls-pill-teal{% else %}ls-pill-grey{% endif %}" style="font-size:0.68rem;">
+                {{ rdv.get_statut_display }}
+              </span>
+              
+              <div style="display:flex; gap:2px; background:rgba(255,255,255,0.03); padding:2px; border-radius:6px; border:1px solid var(--ls-border);">
+                <a href="{% url 'view_conversation' rdv.donneur.user.id %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="padding:0.25rem 0.5rem;" title="Contacter">
+                  <i class="fas fa-comment-dots" style="font-size:0.85rem;"></i>
+                </a>
+                {% if rdv.statut == 'P' %}
+                <a href="{% url 'update_rdv_status' rdv.pk 'H' %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-teal); padding:0.25rem 0.5rem;" title="Honoré">
+                  <i class="fas fa-check"></i>
+                </a>
+                <a href="{% url 'update_rdv_status' rdv.pk 'A' %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); padding:0.25rem 0.5rem;" title="Annuler">
+                  <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="ls-empty" style="padding:1rem;">
+          <p style="margin:0; font-size:0.85rem; color:var(--ls-muted);">Aucun rendez-vous.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Campagnes -->
+    <div class="ls-panel-head" style="background:var(--ls-surface); border:1px solid var(--ls-border); border-radius:var(--ls-radius) var(--ls-radius) 0 0; padding:1.1rem 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+      <h6 style="margin:0; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--ls-muted);">
+        <i class="fas fa-calendar" style="color:var(--ls-teal); margin-right:8px;"></i>Mes campagnes
+      </h6>
+      <a href="{% url 'all_my_campaigns' %}" style="font-size:0.7rem; color:var(--ls-red); font-weight:700;">VOIR TOUT</a>
+    </div>
+    <div style="background:var(--ls-surface); border:1px solid var(--ls-border); border-top:none; border-radius:0 0 var(--ls-radius) var(--ls-radius); padding:1.25rem; display:flex; flex-direction:column; gap:1rem;">
+      {% if campagnes %}
+        {% for campagne in campagnes %}
+        <div class="ls-campaign-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; margin-bottom:2px;">{{ campagne.nom }}</div>
+              <div style="font-size:0.78rem; color:var(--ls-muted);">
+                <i class="fas fa-map-marker-alt" style="color:var(--ls-red); margin-right:4px;"></i>{{ campagne.lieu }}
+                &nbsp;·&nbsp; {{ campagne.date|date:"d/m/Y" }}
+              </div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-bottom:0.4rem;">
+                <a href="{% url 'edit_campaign' campagne.pk %}" style="color:var(--ls-muted); font-size:0.8rem;"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'delete_campaign' campagne.pk %}" style="color:var(--ls-red); font-size:0.8rem;" onclick="return confirm('Supprimer cette campagne ?')"><i class="fas fa-trash"></i></a>
+              </div>
+              <div style="font-size:1.4rem; font-weight:800; color:var(--ls-red); line-height:1;">{{ campagne.places_restantes }}</div>
+              <div style="font-size:0.68rem; color:var(--ls-muted); text-transform:uppercase; letter-spacing:0.06em;">places</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--ls-muted); margin-bottom:4px;">
+            <span>{{ campagne.places_prises }} / {{ campagne.capacite_totale }}</span>
+            {% widthratio campagne.places_prises campagne.capacite_totale 100 as pct %}
+            <span>{{ pct }}%</span>
+          </div>
+          <div class="ls-progress-track">
+            <div class="ls-progress-fill" style="width:0;" data-width="{{ pct }}"></div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="ls-empty">
+        <div class="ls-empty-icon"><i class="fas fa-calendar-times"></i></div>
+        <p>Aucune campagne créée.</p>
+        <a href="{% url 'publish_campaign' %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="margin-top:0.75rem;">Créer une campagne</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.ls-progress-fill[data-width]').forEach(function(el) {
+    el.style.width = el.dataset.width + '%';
+  });
+</script>
+{% endblock %}

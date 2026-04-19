@@ -1,0 +1,43 @@
+{% extends 'magasin/base.html' %}
+{% block title %}{{ supplier.nom }}{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm p-4 mb-4">
+                <h1>{{ supplier.nom }}</h1>
+                <p class="text-muted mb-2">{{ supplier.adresse }}</p>
+                <p><strong>Email :</strong> <a href="mailto:{{ supplier.email }}">{{ supplier.email }}</a></p>
+                <p><strong>Téléphone :</strong> {{ supplier.telephone }}</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-4">
+                <h5 class="mb-3">Statistiques</h5>
+                <p><strong>Produits :</strong> {{ products.count }}</p>
+                <a href="{% url 'index' %}?fournisseur={{ supplier.id }}" class="btn btn-outline-primary">Voir toutes ses offres</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <img src="/media/{{ product.img }}" class="card-img-top" alt="{{ product.libelle }}">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ product.libelle }}</h5>
+                    <p class="text-muted small mb-3">{{ product.prix }} DT</p>
+                    <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-secondary mt-auto">Voir produit</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">Aucun produit n'est disponible pour ce fournisseur.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

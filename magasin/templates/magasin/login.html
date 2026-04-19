@@ -1,0 +1,346 @@
+{% extends 'magasin/base.html' %}
+
+{% block title %}Connexion — MyMagasin{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: var(--bg-page);
+    min-height: 100vh;
+  }
+
+  .login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    padding: 0;
+    overflow: hidden;
+    animation: slideUp 0.5s ease-out;
+  }
+
+  [data-theme="dark"] .login-card {
+    background: #2d3561;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .login-header {
+    background: var(--navy-dark);
+    color: white;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .login-header-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: bounce 0.6s ease-out;
+  }
+
+  .login-header h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-header p {
+    font-size: 0.95rem;
+    opacity: 0.95;
+  }
+
+  .login-body {
+    padding: 2rem 1.5rem;
+  }
+
+  [data-theme="dark"] .login-body {
+    color: #fff;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  [data-theme="dark"] .form-label {
+    color: #e0e0e0;
+  }
+
+  .form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+
+  [data-theme="dark"] .form-control {
+    background: #1a1f3a;
+    border-color: #3d4567;
+    color: #fff;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  [data-theme="dark"] .form-control:focus {
+    background: #2d3561;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-check-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+
+  .form-check-label {
+    color: #666;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  [data-theme="dark"] .form-check-label {
+    color: #ccc;
+  }
+
+  .btn-login {
+    background: var(--navy-dark);
+    color: white;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: none;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+  }
+
+  .btn-login:active {
+    transform: translateY(0);
+  }
+
+  .error-message {
+    background: #fff5f5;
+    border: 2px solid #fc8181;
+    color: #c53030;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  [data-theme="dark"] .error-message {
+    background: #742a2a;
+    border-color: #9b2c2c;
+    color: #fed7d7;
+  }
+
+  .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+  }
+
+  [data-theme="dark"] .invalid-feedback {
+    color: #ff8888;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #ddd, transparent);
+    margin: 1.5rem 0;
+  }
+
+  [data-theme="dark"] .divider {
+    background: linear-gradient(to right, transparent, #555, transparent);
+  }
+
+  .login-footer {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  [data-theme="dark"] .login-footer {
+    color: #ccc;
+  }
+
+  .login-footer a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  .login-footer a:hover {
+    color: #764ba2;
+  }
+
+  .login-footer p {
+    margin-bottom: 0.6rem;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  @media (max-width: 576px) {
+    .login-card {
+      max-width: 100%;
+    }
+
+    .login-header {
+      padding: 1.5rem;
+    }
+
+    .login-header-icon {
+      font-size: 2.5rem;
+    }
+
+    .login-body {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+  <div class="login-card">
+    
+    <!-- Header -->
+    <div class="login-header">
+      <div class="login-header-icon">
+        <i class="fas fa-sign-in-alt"></i>
+      </div>
+      <h3>Connexion</h3>
+      <p>Retrouvez votre tableau de bord</p>
+    </div>
+
+    <!-- Form -->
+    <div class="login-body">
+      
+      {% if form.non_field_errors %}
+      <div class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>Nom d'utilisateur ou mot de passe incorrect.</div>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="id_username" class="form-label">
+            <i class="fas fa-user" style="color: #667eea;"></i>Nom d'utilisateur
+          </label>
+          <input type="text" name="username" id="id_username"
+                 class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                 placeholder="Entrez votre nom d'utilisateur"
+                 value="{{ form.username.value|default:'' }}" required autofocus>
+          {% if form.username.errors %}
+            <div class="invalid-feedback">{{ form.username.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="id_password" class="form-label">
+            <i class="fas fa-lock" style="color: #667eea;"></i>Mot de passe
+          </label>
+          <input type="password" name="password" id="id_password"
+                 class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                 placeholder="Entrez votre mot de passe" required>
+          {% if form.password.errors %}
+            <div class="invalid-feedback">{{ form.password.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Remember Me -->
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="remember" name="remember">
+          <label class="form-check-label" for="remember">
+            Se souvenir de moi
+          </label>
+        </div>
+
+        <button type="submit" class="btn-login">
+          <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <div class="login-footer">
+        <p>
+          Pas encore de compte ?
+          <a href="{% url 'register' %}">Créer un compte</a>
+        </p>
+        <p>
+          <a href="{% url 'password_reset' %}">
+            <i class="fas fa-key me-1"></i>Mot de passe oublié ?
+          </a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

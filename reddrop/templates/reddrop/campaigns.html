@@ -1,0 +1,114 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}Campagnes — BloodConnect{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="ls-in" style="margin-bottom:2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Collectes mobiles</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">Campagnes de don</h1>
+      <p style="color:var(--ls-muted); font-size:0.9rem; margin-top:0.4rem;">Réservez votre place avant qu'elles ne soient complètes.</p>
+    </div>
+    {% if can_publish %}
+    <a href="{% url 'publish_campaign' %}" class="ls-btn ls-btn-primary">
+      <i class="fas fa-calendar-plus"></i> Créer une Campagne
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if campagnes %}
+
+<!-- Campaign Grid -->
+<div class="row g-3 ls-in-2">
+  {% for campagne in campagnes %}
+  <div class="col-xl-4 col-lg-6">
+    <div class="ls-campaign-card" style="display:flex; flex-direction:column; height:100%;">
+
+      <!-- Top row: date + badge -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.1rem;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--ls-muted); font-weight:600;">
+          <i class="fas fa-calendar-alt" style="color:var(--ls-red);"></i>
+          {{ campagne.date|date:"d M Y" }}
+        </div>
+        {% if campagne.places_restantes > 0 %}
+        <span class="ls-pill ls-pill-teal">{{ campagne.places_restantes }} places</span>
+        {% else %}
+        <span class="ls-pill ls-pill-grey">Complet</span>
+        {% endif %}
+      </div>
+
+      <!-- Name + hospital -->
+      <h4 style="font-size:1.1rem; font-weight:800; margin-bottom:0.3rem; letter-spacing:-0.02em;">{{ campagne.nom }}</h4>
+      <p style="font-size:0.82rem; color:var(--ls-muted); margin-bottom:1.25rem; flex-grow:1;">
+        <i class="fas fa-hospital" style="color:var(--ls-red); margin-right:4px;"></i>{{ campagne.hopital.nom }}
+      </p>
+
+      <!-- Details -->
+      <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.83rem; color:var(--ls-muted); margin-bottom:1.25rem;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-map-marker-alt" style="color:var(--ls-red); width:14px;"></i>
+          <span>{{ campagne.lieu }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-tint" style="color:var(--ls-red); width:14px;"></i>
+          <span>Groupes : {{ campagne.groupes_cibles }}</span>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--ls-muted); margin-bottom:5px;">
+        <span>Occupation</span>
+        <span>{{ campagne.places_prises }} / {{ campagne.capacite_totale }}</span>
+      </div>
+      {% widthratio campagne.places_prises campagne.capacite_totale 100 as pct %}
+      <div class="ls-progress-track" style="margin-bottom:1.25rem;">
+        <div class="ls-progress-fill" style="width:0;" data-width="{{ pct }}"></div>
+      </div>
+
+      <!-- CTA -->
+      {% if campagne.places_restantes > 0 %}
+      <form action="{% url 'participer_campagne' campagne.id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="ls-btn ls-btn-primary ls-btn-full">
+          <i class="fas fa-check-circle"></i> Participer
+        </button>
+      </form>
+      {% else %}
+      <button class="ls-btn ls-btn-ghost ls-btn-full" disabled style="opacity:0.4; cursor:not-allowed;">
+        Campagne complète
+      </button>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+
+<div class="ls-empty" style="margin-top:4rem;" >
+  <div class="ls-empty-icon" style="width:72px; height:72px; font-size:2rem;"><i class="fas fa-calendar-times"></i></div>
+  <h4 style="font-weight:700; margin:0.75rem 0 0.4rem;">Aucune campagne disponible</h4>
+  <p>Les prochaines campagnes de collecte apparaîtront ici.</p>
+  {% if can_publish %}
+  <a href="{% url 'publish_campaign' %}" class="ls-btn ls-btn-primary" style="margin-top:1.25rem;">
+    <i class="fas fa-calendar-plus"></i> Créer la première
+  </a>
+  {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.ls-progress-fill[data-width]').forEach(function(el) {
+    el.style.width = el.dataset.width + '%';
+  });
+</script>
+{% endblock %}

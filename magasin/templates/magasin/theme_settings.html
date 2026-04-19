@@ -1,0 +1,127 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Préférences d'affichage — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <div class="page-header">
+    <h2>
+      <span class="icon-badge"><i class="fas fa-palette"></i></span>
+      Préférences d'affichage
+    </h2>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i>Retour
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-body p-4">
+
+          <!-- Current theme -->
+          <div class="mb-4">
+            <h6 class="form-label">Thème actuel</h6>
+            <div class="d-flex align-items-center gap-3">
+              <div class="theme-preview"></div>
+              <div>
+                <span class="badge bg-primary" id="currentThemeBadge">Clair</span>
+                <p class="text-muted small mb-0 mt-1">Sauvegardé automatiquement dans votre navigateur</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Theme selector -->
+          <div class="mb-4">
+            <h6 class="form-label">Choisir un thème</h6>
+            <div class="d-flex gap-3 flex-wrap">
+              <button class="btn btn-outline-primary theme-selector" data-theme="light">
+                <i class="fas fa-sun me-2"></i>Mode clair
+              </button>
+              <button class="btn btn-outline-primary theme-selector" data-theme="dark">
+                <i class="fas fa-moon me-2"></i>Mode sombre
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Extra options -->
+          <div class="mb-4">
+            <h6 class="form-label">Options supplémentaires</h6>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="autoTheme">
+              <label class="form-check-label" for="autoTheme">
+                Suivre les préférences système
+              </label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="reduceMotion">
+              <label class="form-check-label" for="reduceMotion">
+                Réduire les animations
+              </label>
+            </div>
+          </div>
+
+          <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle"></i>
+            Les changements de thème s'appliquent immédiatement et sont conservés pour vos prochaines visites.
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const badge = document.getElementById('currentThemeBadge');
+
+  function updateBadge() {
+    const t = document.documentElement.getAttribute('data-theme') || 'light';
+    badge.textContent = t === 'light' ? 'Clair' : 'Sombre';
+  }
+  updateBadge();
+
+  // Theme selector buttons
+  document.querySelectorAll('.theme-selector').forEach(btn => {
+    btn.addEventListener('click', function () {
+      if (window.themeManager) {
+        window.themeManager.setTheme(this.dataset.theme);
+        updateBadge();
+        showToast(this.dataset.theme === 'light' ? '☀️ Mode clair activé' : '🌙 Mode sombre activé', 'info');
+      }
+    });
+  });
+
+  // Auto (system) preference
+  document.getElementById('autoTheme').addEventListener('change', function () {
+    if (this.checked) {
+      localStorage.removeItem('theme');
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (window.themeManager) {
+        window.themeManager.setTheme(dark ? 'dark' : 'light');
+        updateBadge();
+      }
+    }
+  });
+
+  // Reduce motion
+  document.getElementById('reduceMotion').addEventListener('change', function () {
+    document.documentElement.style.setProperty(
+      '--transition',
+      this.checked ? 'none' : '0.22s cubic-bezier(0.25,0.46,0.45,0.94)'
+    );
+  });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

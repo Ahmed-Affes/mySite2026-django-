@@ -1,0 +1,25 @@
+{% extends 'magasin/base.html' %}
+{% block title %}Nouvelle application{% endblock title %}
+
+{% block content %}
+<header class="page-header">
+    <div class="container">
+        <p class="page-header__eyebrow">Nouvelle application</p>
+        <h1 class="page-header__title">Page de l'application à venir</h1>
+        <p class="lead">Cette page est préparée pour la future application. Vous pourrez y intégrer votre nouveau module dès que vous l'aurez ajouté.</p>
+    </div>
+</header>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm p-4">
+                <div class="card-body">
+                    <p>Pour l'instant, cette page sert de point d'entrée pour la nouvelle application.</p>
+                    <a href="{% url 'launcher' %}" class="btn btn-outline-primary">Retour à la sélection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

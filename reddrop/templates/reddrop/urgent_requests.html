@@ -1,0 +1,130 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}Urgences — BloodConnect{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="ls-in" style="margin-bottom:2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Appels critiques</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">Dons d'Urgence</h1>
+      <p style="color:var(--ls-muted); font-size:0.9rem; margin-top:0.4rem;">Des hôpitaux ont un besoin critique en sang — vérifiez si vous êtes compatible.</p>
+    </div>
+    {% if is_hospital %}
+    <a href="{% url 'publish_request' %}" class="ls-btn ls-btn-primary">
+      <i class="fas fa-plus"></i> Nouvelle Demande
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="ls-filter ls-in-2">
+  <form method="get" class="d-flex gap-3 align-items-end flex-wrap w-100">
+    <div style="flex:1; min-width:150px;">
+      <label class="ls-label">Groupe Sanguin</label>
+      <select name="groupe" class="form-select" style="height:42px;">
+        <option value="">Tous les groupes</option>
+        {% for code, label in blood_types %}
+        <option value="{{ code }}" {% if code == groupe %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:2; min-width:200px;">
+      <label class="ls-label">Ville</label>
+      <div class="input-group" style="height:42px;">
+        <span class="input-group-text"><i class="fas fa-map-marker-alt" style="color:var(--ls-red);"></i></span>
+        <input type="text" name="ville" value="{{ ville|default_if_none:'' }}"
+               class="form-control" placeholder="Ex: Tunis" style="height:42px;">
+      </div>
+    </div>
+    <button type="submit" class="ls-btn ls-btn-ghost" style="height:42px; padding:0 1.5rem;">
+      <i class="fas fa-search"></i> Filtrer
+    </button>
+    {% if groupe or ville %}
+    <a href="{% url 'blood_demandes' %}" class="ls-btn ls-btn-outline ls-btn-sm" style="height:42px;">
+      <i class="fas fa-times"></i> Effacer
+    </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Results Grid -->
+<div class="row g-3 ls-in-3">
+  {% for demande in demandes %}
+  <div class="col-xl-4 col-lg-6">
+    <div class="ls-req-card {% if demande.groupe_sanguin in compatible_types %}compatible{% endif %}">
+      <div class="ls-req-card-accent"></div>
+      <div class="ls-req-card-body">
+
+        <!-- Top row -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.1rem;">
+          <div style="display:flex; align-items:center; gap:0.85rem;">
+            <div class="ls-blood-tag lg">{{ demande.groupe_sanguin }}</div>
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">{{ demande.hopital.nom }}</div>
+              <div style="font-size:0.78rem; color:var(--ls-muted); margin-top:2px;">
+                <i class="fas fa-map-marker-alt" style="color:var(--ls-red);"></i> {{ demande.ville }}
+              </div>
+            </div>
+          </div>
+          {% if demande.groupe_sanguin in compatible_types %}
+          <span class="ls-compat-pill"><i class="fas fa-check"></i> Compatible</span>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <p style="font-size:0.85rem; color:var(--ls-muted); line-height:1.65; margin-bottom:1.25rem;">{{ demande.description }}</p>
+
+        <!-- Two metrics -->
+        <div style="display:grid; grid-template-columns:1fr 1px 1fr; background:var(--ls-panel); border:1px solid var(--ls-border); border-radius:var(--ls-radius-sm); overflow:hidden;">
+          <div style="padding:0.85rem 1rem; text-align:center;">
+            <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--ls-muted); margin-bottom:4px;">Besoin</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--ls-red);">{{ demande.quantite }}&nbsp;<span style="font-size:0.75rem; font-weight:600;">poches</span></div>
+          </div>
+          <div style="background:var(--ls-border);"></div>
+          <div style="padding:0.85rem 1rem; text-align:center;">
+            <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--ls-muted); margin-bottom:4px;">Délai</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--ls-text);">{{ demande.delai }}&nbsp;<span style="font-size:0.75rem; font-weight:600; color:var(--ls-muted);">jours</span></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="ls-req-card-foot">
+        {% if can_respond %}
+          {% if demande.groupe_sanguin in compatible_types %}
+          <a href="{% url 'respond_request' demande.id %}" class="ls-btn ls-btn-primary ls-btn-full">
+            <i class="fas fa-hand-holding-heart"></i> Se porter volontaire
+          </a>
+          {% else %}
+          <button class="ls-btn ls-btn-ghost ls-btn-full" disabled style="opacity:0.4; cursor:not-allowed;">
+            <i class="fas fa-ban"></i> Groupe incompatible
+          </button>
+          {% endif %}
+        {% elif is_hospital %}
+        <button class="ls-btn ls-btn-ghost ls-btn-full" disabled style="opacity:0.5; cursor:not-allowed;">
+          Connecté en tant qu'Hôpital
+        </button>
+        {% else %}
+        <a href="{% url 'blood_login' %}" class="ls-btn ls-btn-outline ls-btn-full">
+          <i class="fas fa-sign-in-alt"></i> Connexion requise
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% empty %}
+  <div class="col-12">
+    <div class="ls-empty" style="margin-top:3rem;">
+      <div class="ls-empty-icon" style="width:72px; height:72px; font-size:2rem;"><i class="fas fa-check-circle" style="color:var(--ls-teal);"></i></div>
+      <h4 style="font-weight:700; margin:0.75rem 0 0.4rem;">Aucune urgence active</h4>
+      <p>Les banques de sang sont stables ou votre filtre ne retourne aucun résultat.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

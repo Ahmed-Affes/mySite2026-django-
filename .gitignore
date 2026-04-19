@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+vms/
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+db.sqlite3
+local_settings.py
+sessions/
+static/
+staticfiles/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

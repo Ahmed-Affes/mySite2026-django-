@@ -1,0 +1,36 @@
+{% extends 'magasin/base.html' %}
+{% block title %}Passer une commande{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title mb-3">Nouvelle commande</h1>
+                    <p class="text-muted mb-4">Sélectionnez un ou plusieurs produits, puis validez la commande. Le total est calculé automatiquement.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        <div class="mb-4">
+                            {{ form.produits.errors }}
+                            {{ form.produits.label_tag }}
+                            <div class="row gy-2">
+                                {% for checkbox in form.produits %}
+                                <div class="col-12">
+                                    <label class="form-check d-flex align-items-center">
+                                        {{ checkbox.tag }}
+                                        <span class="ms-2">{{ checkbox.choice_label }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Valider la commande</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

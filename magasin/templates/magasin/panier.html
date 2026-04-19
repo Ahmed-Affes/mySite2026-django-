@@ -1,0 +1,255 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Mon Panier — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- ── Page Header ──────────────────────────────────── -->
+  <div class="page-header">
+    <h2>
+      <span class="icon-badge"><i class="fas fa-shopping-cart"></i></span>
+      Mon Panier
+      {% if panier_items %}
+      <span class="badge bg-primary ms-2" style="font-size:0.75rem;">
+        {{ panier_items|length }} article(s)
+      </span>
+      {% endif %}
+    </h2>
+    <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Continuer les achats
+    </a>
+  </div>
+
+  {% if panier_items %}
+
+  <div class="row g-4">
+
+    <!-- ── Cart Items ──────────────────────────────────── -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="fas fa-list me-2 text-muted"></i>Articles</span>
+          <!-- Clear all button -->
+          <form method="post" action="{% url 'panier_vider' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Vider tout le panier ?')">
+              <i class="fas fa-trash me-1"></i>Tout supprimer
+            </button>
+          </form>
+        </div>
+
+        <div class="card-body p-0">
+          {% for item in panier_items %}
+          <div class="cart-item d-flex align-items-center gap-3 p-3
+                      {% if not forloop.last %}border-bottom{% endif %}"
+               style="border-color: var(--border) !important;"
+               id="cart-item-{{ item.produit.id }}">
+
+            <!-- Product image -->
+            <div class="flex-shrink-0">
+              {% if item.produit.image %}
+              <img src="{{ item.produit.image }}"
+                   alt="{{ item.produit.libelle }}"
+                   style="width:80px;height:80px;object-fit:cover;border-radius:var(--r-md);">
+              {% else %}
+              <div class="d-flex align-items-center justify-content-center"
+                   style="width:80px;height:80px;border-radius:var(--r-md);background:var(--bg-page);">
+                <i class="fas fa-image fa-2x text-muted opacity-50"></i>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Product info -->
+            <div class="flex-grow-1">
+              <h6 class="fw-bold mb-1">{{ item.produit.libelle }}</h6>
+              <small class="text-muted">
+                <i class="fas fa-tag me-1"></i>
+                {% if item.produit.categorie %}{{ item.produit.categorie.name }}{% else %}—{% endif %}
+                &nbsp;·&nbsp;
+                {{ item.produit.get_type_display }}
+              </small>
+              <div class="mt-1 fw-bold" style="color:var(--navy);">
+                {{ item.produit.prix }} DT / unité
+              </div>
+            </div>
+
+            <!-- Quantity controls -->
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+              <!-- Decrease -->
+              <form method="post" action="{% url 'panier_diminuer' item.produit.id %}">
+                {% csrf_token %}
+                <button type="submit" style="
+                    width:34px; height:34px;
+                    border-radius:50%;
+                    border:1.5px solid var(--border);
+                    background:transparent;
+                    color:var(--text-main);
+                    display:flex; align-items:center; justify-content:center;
+                    cursor:pointer; padding:0; line-height:1;
+                    transition:background 0.2s, border-color 0.2s;">
+                  <i class="fas fa-minus" style="font-size:0.65rem; line-height:1; display:block;"></i>
+                </button>
+              </form>
+
+              <!-- Quantity badge -->
+              <span style="
+                  width:36px; height:36px;
+                  border-radius:50%;
+                  background:linear-gradient(135deg,var(--navy-dark),var(--navy-light));
+                  color:#fff;
+                  display:flex; align-items:center; justify-content:center;
+                  font-weight:700; font-size:0.95rem; line-height:1;
+                  flex-shrink:0;">
+                {{ item.quantite }}
+              </span>
+
+              <!-- Increase -->
+              <form method="post" action="{% url 'panier_ajouter' item.produit.id %}">
+                {% csrf_token %}
+                <button type="submit" style="
+                    width:34px; height:34px;
+                    border-radius:50%;
+                    border:1.5px solid var(--navy-light);
+                    background:transparent;
+                    color:var(--navy-light);
+                    display:flex; align-items:center; justify-content:center;
+                    cursor:pointer; padding:0; line-height:1;
+                    transition:background 0.2s, border-color 0.2s;">
+                  <i class="fas fa-plus" style="font-size:0.65rem; line-height:1; display:block;"></i>
+                </button>
+              </form>
+            </div>
+
+            <!-- Line total -->
+            <div class="text-end flex-shrink-0" style="min-width:90px;">
+              <div class="fw-bold fs-6" style="color:var(--navy);">
+                {{ item.total }} DT
+              </div>
+              <!-- Remove item -->
+              <form method="post" action="{% url 'panier_supprimer' item.produit.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link text-danger p-0 mt-1"
+                        style="font-size:0.8rem;">
+                  <i class="fas fa-trash-alt me-1"></i>Retirer
+                </button>
+              </form>
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Order Summary ───────────────────────────────── -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-receipt me-2 text-muted"></i>Récapitulatif
+        </div>
+        <div class="card-body">
+
+          <!-- Item breakdown -->
+          {% for item in panier_items %}
+          <div class="d-flex justify-content-between small mb-2">
+            <span class="text-muted text-truncate me-2" style="max-width:160px;">
+              {{ item.produit.libelle }} × {{ item.quantite }}
+            </span>
+            <span class="fw-semibold">{{ item.total }} DT</span>
+          </div>
+          {% endfor %}
+
+          <div class="divider"></div>
+
+          <!-- Total -->
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted">Sous-total</span>
+            <span class="fw-semibold">{{ total_panier }} DT</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">Livraison</span>
+            <span class="badge bg-success">Gratuite</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="fw-bold fs-5">Total</span>
+            <span class="fw-bold fs-5" style="color:var(--navy);">{{ total_panier }} DT</span>
+          </div>
+
+          <!-- Checkout -->
+          <form method="post" action="{% url 'panier_commander' %}">
+            {% csrf_token %}
+            
+            <div class="mb-3 mt-2">
+              <label class="form-label text-muted small fw-bold">Adresse de livraison <span class="text-danger">*</span></label>
+              <textarea name="adresse_livraison" class="form-control" rows="2" placeholder="Ex: 123 Rue de la Liberté, Tunis" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Numéro de Téléphone <span class="text-danger">*</span></label>
+              <input type="text" name="telephone_contact" class="form-control" placeholder="Ex: 55 123 456" required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label text-muted small fw-bold">Email de contact <span class="text-danger">*</span></label>
+              <input type="email" name="email_contact" class="form-control" value="{{ request.user.email }}" placeholder="votre@email.com" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg mb-2">
+              <i class="fas fa-check-circle me-2"></i>Passer la commande
+            </button>
+          </form>
+
+          <a href="{% url 'index' %}" class="btn btn-outline-secondary w-100">
+            <i class="fas fa-shopping-bag me-2"></i>Continuer les achats
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="card mt-3">
+        <div class="card-body py-3">
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex align-items-center gap-2 small text-muted">
+              <i class="fas fa-shield-alt text-success"></i>
+              Paiement 100% sécurisé
+            </div>
+            <div class="d-flex align-items-center gap-2 small text-muted">
+              <i class="fas fa-truck text-primary"></i>
+              Livraison gratuite
+            </div>
+            <div class="d-flex align-items-center gap-2 small text-muted">
+              <i class="fas fa-undo text-warning"></i>
+              Retour sous 14 jours
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% else %}
+
+  <!-- ── Empty Cart ──────────────────────────────────────── -->
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="fas fa-shopping-cart fa-5x text-muted opacity-30"></i>
+    </div>
+    <h3 class="fw-bold mb-2">Votre panier est vide</h3>
+    <p class="text-muted mb-4">
+      Parcourez notre catalogue et ajoutez des produits à votre panier.
+    </p>
+    <a href="{% url 'index' %}" class="btn btn-primary btn-lg">
+      <i class="fas fa-shopping-bag me-2"></i>Voir le catalogue
+    </a>
+  </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}

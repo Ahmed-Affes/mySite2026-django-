@@ -1,0 +1,290 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Catalogue — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- ── Page Header ──────────────────────────────────── -->
+  <div class="page-header d-flex align-items-center flex-wrap gap-3 mb-4">
+    <h2 class="mb-0 d-flex align-items-center gap-2">
+      <span class="icon-badge"><i class="fas fa-shopping-bag"></i></span>
+      Notre Catalogue
+    </h2>
+    <span class="badge bg-primary px-3 py-2" style="font-size: 0.9rem;">
+      <i class="fas fa-box me-1"></i>{{ products.paginator.count }} produit(s)
+    </span>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── Sidebar ──────────────────────────────────── -->
+    <div class="col-lg-3">
+
+      <!-- Search -->
+      <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-search me-2"></i>Recherche
+        </div>
+        <div class="card-body p-2">
+          <form method="GET" id="searchForm">
+            {% if request.GET.categorie %}
+            <input type="hidden" name="categorie" value="{{ request.GET.categorie }}">
+            {% endif %}
+            <div class="input-group">
+              <input type="text" name="search" id="searchInput"
+                     class="form-control form-control-sm"
+                     placeholder="Nom du produit…"
+                     value="{{ request.GET.search }}">
+              <button class="btn btn-primary btn-sm" type="submit">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="card sidebar-card mb-3">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-filter me-2"></i>Catégories
+        </div>
+        <div class="list-group list-group-flush">
+          <a href="{% url 'index' %}{% if request.GET.search %}?search={{ request.GET.search }}{% endif %}"
+             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                    {% if not request.GET.categorie %}active{% endif %}">
+            <span><i class="fas fa-th-large me-2"></i>Tous</span>
+            <span class="badge bg-primary rounded-pill">{{ products.paginator.count }}</span>
+          </a>
+          {% for cat in categories %}
+          <a href="?categorie={{ cat.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                    {% if request.GET.categorie == cat.id|stringformat:'i' %}active{% endif %}">
+            <span><i class="fas fa-tag me-2"></i>{{ cat.name }}</span>
+            <span class="badge bg-primary rounded-pill">{{ cat.produit_set.count }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Price Range -->
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-filter me-2"></i>Prix (DT)
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Min</span><span id="priceMinLabel">0 DT</span>
+            </div>
+            <input type="range" class="form-range" min="0" max="2000" step="10" id="priceMin" value="0">
+          </div>
+          <div>
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Max</span><span id="priceMaxLabel">2000 DT</span>
+            </div>
+            <input type="range" class="form-range" min="0" max="2000" step="10" id="priceMax" value="2000">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Products Grid ─────────────────────────────── -->
+    <div class="col-lg-9">
+
+      <!-- Sort bar -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <small class="text-muted">
+          {% if request.GET.search %}
+            Résultats pour <strong>"{{ request.GET.search }}"</strong> —
+          {% endif %}
+          <strong>{{ products.paginator.count }}</strong> produit(s)
+        </small>
+        <select class="form-select form-select-sm" style="width:auto;" id="sortSelect">
+          <option value="default">Trier par…</option>
+          <option value="price_asc">Prix ↑</option>
+          <option value="price_desc">Prix ↓</option>
+          <option value="name_asc">Nom A→Z</option>
+          <option value="name_desc">Nom Z→A</option>
+        </select>
+      </div>
+
+      {% if products %}
+      <div class="row g-3 stagger" id="productsGrid">
+        {% for product in products %}
+        <div class="col-sm-6 col-xl-4 product-item"
+             data-price="{{ product.prix }}"
+             data-name="{{ product.libelle }}">
+          <div class="card product-card h-100">
+
+            <!-- Image -->
+            <div class="card-img-wrapper">
+              {% if product.image %}
+              <img src="{{ product.image }}" class="product-img" alt="{{ product.libelle }}">
+              {% else %}
+              <div class="product-no-image">
+                <i class="fas fa-image fa-3x text-muted opacity-50"></i>
+              </div>
+              {% endif %}
+              <div class="position-absolute top-0 end-0 m-2 d-flex gap-1 flex-column">
+                <span class="badge bg-primary">{{ product.get_type_display }}</span>
+                {% if not product.is_active %}
+                <span class="badge bg-danger">Inactif</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+              <h6 class="fw-bold mb-1 text-truncate">{{ product.libelle }}</h6>
+              <p class="text-muted small mb-2"
+                 style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-clamp:2;">
+                {{ product.description }}
+              </p>
+              <span class="fw-bold fs-5" style="color:var(--navy);">{{ product.prix }} DT</span>
+            </div>
+
+            <!-- Footer with real cart form -->
+            <div class="card-footer d-flex justify-content-between align-items-center gap-2">
+              <small class="text-muted text-truncate" style="min-width: 0; flex-grow: 1;">
+                <i class="fas fa-tag me-1"></i>{{ product.categorie.name|default:"—" }}
+              </small>
+              <div class="d-flex gap-1 flex-shrink-0">
+                <!-- Wishlist toggle -->
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'wishlist_add' product.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm" title="Ajouter aux favoris">
+                    <i class="fas fa-heart"></i>
+                  </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'detail' product.id %}" class="btn btn-primary btn-sm">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <!-- ── Real Add to Cart ─────────────────── -->
+                <form method="post" action="{% url 'panier_ajouter' product.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit"
+                          class="btn btn-outline-secondary btn-sm"
+                          data-bs-toggle="tooltip"
+                          title="Ajouter au panier">
+                    <i class="fas fa-shopping-cart"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if products.paginator.num_pages > 1 %}
+      <nav class="mt-4" aria-label="Pagination catalogue">
+        <ul class="pagination justify-content-center">
+          {% if products.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.categorie %}&categorie={{ request.GET.categorie }}{% endif %}">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.categorie %}&categorie={{ request.GET.categorie }}{% endif %}">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          {% for num in products.paginator.page_range %}
+            {% if products.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.categorie %}&categorie={{ request.GET.categorie }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+          {% endfor %}
+          {% if products.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.categorie %}&categorie={{ request.GET.categorie }}{% endif %}">
+              <i class="fas fa-angle-right"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ products.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.categorie %}&categorie={{ request.GET.categorie }}{% endif %}">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-box-open fa-4x text-muted mb-3 opacity-50"></i>
+        <h4 class="text-muted">Aucun produit trouvé</h4>
+        <p class="text-muted">Modifiez vos critères de recherche ou de filtre.</p>
+        <a href="{% url 'index' %}" class="btn btn-outline-primary mt-2">
+          <i class="fas fa-times me-1"></i>Réinitialiser
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Debounced live search
+  var timer;
+  document.getElementById('searchInput')?.addEventListener('keyup', function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () { document.getElementById('searchForm').submit(); }, 500);
+  });
+
+  // Client-side sort
+  document.getElementById('sortSelect')?.addEventListener('change', function () {
+    var grid  = document.getElementById('productsGrid');
+    var items = Array.from(grid.querySelectorAll('.product-item'));
+    var val   = this.value;
+    items.sort(function (a, b) {
+      var pA = parseFloat(a.dataset.price), pB = parseFloat(b.dataset.price);
+      var nA = a.dataset.name.toLowerCase(), nB = b.dataset.name.toLowerCase();
+      if (val === 'price_asc')  return pA - pB;
+      if (val === 'price_desc') return pB - pA;
+      if (val === 'name_asc')   return nA.localeCompare(nB);
+      if (val === 'name_desc')  return nB.localeCompare(nA);
+      return 0;
+    });
+    items.forEach(function (i) { grid.appendChild(i); });
+  });
+
+  // Price range filter
+  var minEl  = document.getElementById('priceMin');
+  var maxEl  = document.getElementById('priceMax');
+  var minLbl = document.getElementById('priceMinLabel');
+  var maxLbl = document.getElementById('priceMaxLabel');
+
+  function filterByPrice() {
+    var lo = parseInt(minEl.value), hi = parseInt(maxEl.value);
+    minLbl.textContent = lo + ' DT';
+    maxLbl.textContent = hi + ' DT';
+    document.querySelectorAll('.product-item').forEach(function (el) {
+      var p = parseFloat(el.dataset.price);
+      el.style.display = (p >= lo && p <= hi) ? '' : 'none';
+    });
+  }
+  if (minEl) minEl.addEventListener('input', filterByPrice);
+  if (maxEl) maxEl.addEventListener('input', filterByPrice);
+});
+</script>
+{% endblock %}
+
+{% endblock %}

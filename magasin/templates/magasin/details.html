@@ -1,0 +1,70 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.libelle }} - MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Catalogue</a></li>
+            <li class="breadcrumb-item"><a href="?categorie={{ product.categorie.id }}">{{ product.categorie.name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.libelle }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                {% if product.image %}
+                <img src="{{ product.image }}" class="card-img-top" alt="{{ product.libelle }}" 
+                     style="height: 400px; object-fit: cover;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="fas fa-image fa-4x text-muted"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-3">{{ product.libelle }}</h2>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ product.categorie.name }}</span>
+                        <span class="badge bg-info">{{ product.get_type_display }}</span>
+                    </div>
+                    
+                    <h3 class="text-primary mb-4">{{ product.prix }} DT</h3>
+                    
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="text-muted">{{ product.description }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Fournisseur</h5>
+                        <p>
+                            <i class="fas fa-truck me-2 text-muted"></i>
+                            {{ product.fournisseur.nom }}
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" onclick="addToCartAnimation(this)">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Ajouter au panier
+                        </button>
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Retour au catalogue
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
