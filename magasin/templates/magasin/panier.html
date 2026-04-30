@@ -50,16 +50,9 @@
 
             <!-- Product image -->
             <div class="flex-shrink-0">
-              {% if item.produit.image %}
-              <img src="{{ item.produit.image }}"
+              <img src="{{ item.produit.image_url }}"
                    alt="{{ item.produit.libelle }}"
                    style="width:80px;height:80px;object-fit:cover;border-radius:var(--r-md);">
-              {% else %}
-              <div class="d-flex align-items-center justify-content-center"
-                   style="width:80px;height:80px;border-radius:var(--r-md);background:var(--bg-page);">
-                <i class="fas fa-image fa-2x text-muted opacity-50"></i>
-              </div>
-              {% endif %}
             </div>
 
             <!-- Product info -->

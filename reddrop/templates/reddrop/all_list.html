@@ -3,48 +3,143 @@
 
 {% block extra_css %}
 <style>
-  .table {
-    margin: 0 !important;
-    background-color: transparent !important;
-    color: var(--ls-text) !important;
-    border-color: var(--ls-border) !important;
-  }
-  .table thead {
-    background: rgba(255, 255, 255, 0.03) !important;
-  }
-  .table thead th {
-    background: none !important;
-    border: none !important;
-    padding: 1.25rem 1.5rem !important;
-    font-size: 0.72rem !important;
-    font-weight: 700 !important;
-    color: var(--ls-muted) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.1em !important;
-  }
-  .table tbody td {
-    background: none !important;
-    border-top: 1px solid var(--ls-border) !important;
-    padding: 1.25rem 1.5rem !important;
-    color: var(--ls-text) !important;
-    vertical-align: middle !important;
-  }
-  .table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.02) !important;
-  }
-  .table-responsive {
-    border: none !important;
+  .al-card {
+    background: var(--ls-surface);
+    border: 1px solid var(--ls-border);
     border-radius: var(--ls-radius);
     overflow: hidden;
   }
+
+  .al-row {
+    display: flex;
+    align-items: center;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--ls-border);
+    gap: 1rem;
+    transition: background 0.15s;
+  }
+  .al-row:last-child { border-bottom: none; }
+  .al-row:hover { background: rgba(255,255,255,0.025); }
+
+  .al-col-main  { flex: 1 1 0; min-width: 0; }
+  .al-col-meta  { flex: 0 0 160px; min-width: 0; }
+  .al-col-stat  { flex: 0 0 110px; text-align: center; }
+  .al-col-acts  { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }
+
+  .al-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--ls-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .al-sub {
+    font-size: 0.75rem;
+    color: var(--ls-muted);
+    margin-top: 2px;
+  }
+
+  /* Action button group */
+  .al-actions {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ls-border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .al-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.28rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    white-space: nowrap;
+  }
+  .al-btn:hover { transform: translateY(-1px); }
+  .al-btn-confirm {
+    background: rgba(20,184,166,0.12);
+    color: var(--ls-teal);
+  }
+  .al-btn-confirm:hover { background: rgba(20,184,166,0.25); color: var(--ls-teal); }
+
+  .al-btn-cancel {
+    background: rgba(229,57,53,0.1);
+    color: var(--ls-red);
+  }
+  .al-btn-cancel:hover { background: rgba(229,57,53,0.22); color: var(--ls-red); }
+
+  .al-btn-chat {
+    background: rgba(255,255,255,0.05);
+    color: var(--ls-muted);
+  }
+  .al-btn-chat:hover { background: rgba(255,255,255,0.1); color: var(--ls-text); }
+
+  .al-btn-edit {
+    background: rgba(255,255,255,0.05);
+    color: var(--ls-muted);
+  }
+  .al-btn-edit:hover { background: rgba(255,255,255,0.1); color: var(--ls-text); }
+
+  .al-btn-delete {
+    background: rgba(229,57,53,0.08);
+    color: var(--ls-red);
+  }
+  .al-btn-delete:hover { background: rgba(229,57,53,0.2); color: var(--ls-red); }
+
+  /* Progress bar */
+  .al-progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .al-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ls-red), #ff6b6b);
+    border-radius: 99px;
+    transition: width 0.8s ease;
+    width: 0;
+  }
+
+  /* Header stats band */
+  .al-header-stats {
+    display: flex;
+    gap: 2rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--ls-border);
+    border-radius: var(--ls-radius);
+    padding: 1.1rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .al-hstat { text-align: center; }
+  .al-hstat-num { font-weight: 800; font-size: 1.6rem; color: var(--ls-red); line-height: 1; }
+  .al-hstat-label { font-size: 0.7rem; color: var(--ls-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+
+  .al-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--ls-muted);
+  }
+  .al-empty i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.4; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="ls-in">
-  <div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end;">
+
+  <!-- Page Header -->
+  <div style="margin-bottom:1.75rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
     <div>
-      <p class="ls-section-title">Gestion complète</p>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Gestion complète</p>
       <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">{{ title }}</h1>
     </div>
     <a href="{% url 'blood_dashboard' %}" class="ls-btn ls-btn-ghost">
@@ -52,71 +147,203 @@
     </a>
   </div>
 
-  <div class="ls-panel">
-    <div class="ls-panel-body flush">
-      {% if items %}
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                {% if type == 'rdv' %}
-                  <th>Date & Heure</th>
-                  <th>Partenaire</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                {% else %}
-                  <th>Nom</th>
-                  <th>Date</th>
-                  <th>Occupation</th>
-                  <th>Actions</th>
-                {% endif %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in items %}
-              <tr>
-                {% if type == 'rdv' %}
-                  <td>{{ item.date_heure|date:"d/m/Y H:i" }}</td>
-                  <td>
-                    {% if user.donneur_banque %}
-                      {{ item.hopital.nom }}
-                    {% else %}
-                      {{ item.donneur.user.username }}
-                    {% endif %}
-                  </td>
-                  <td>
-                    <span class="ls-pill {% if item.statut == 'P' %}ls-pill-orange{% elif item.statut == 'H' %}ls-pill-teal{% else %}ls-pill-grey{% endif %}">
-                      {{ item.get_statut_display }}
-                    </span>
-                  </td>
-                  <td>
-                    {% if item.statut == 'P' %}
-                      {% if user.hopital_banque %}
-                        <a href="{% url 'update_rdv_status' item.pk 'H' %}" class="ls-btn ls-btn-primary ls-btn-sm">Confirmer</a>
-                      {% endif %}
-                      <a href="{% url 'cancel_rendezvous' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red);">Annuler</a>
-                    {% endif %}
-                  </td>
-                {% else %}
-                  <td>{{ item.nom }}</td>
-                  <td>{{ item.date|date:"d/m/Y" }}</td>
-                  <td>{{ item.places_prises }} / {{ item.capacite_totale }}</td>
-                  <td>
-                    <a href="{% url 'edit_campaign' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm"><i class="fas fa-edit"></i></a>
-                    <a href="{% url 'delete_campaign' item.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red);"><i class="fas fa-trash"></i></a>
-                  </td>
-                {% endif %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="ls-empty" style="padding:4rem;">
-          <p>Aucun élément trouvé.</p>
-        </div>
-      {% endif %}
+  <!-- Summary Stats -->
+  {% if items %}
+  <div class="al-header-stats ls-in-2">
+    <div class="al-hstat">
+      <div class="al-hstat-num">{{ items|length }}</div>
+      <div class="al-hstat-label">Total</div>
     </div>
+    {% if type == 'rdv' %}
+      <div class="al-hstat">
+        <div class="al-hstat-num" style="color:var(--ls-orange);">
+          {{ items|length }}
+        </div>
+        <div class="al-hstat-label">Rendez-vous</div>
+      </div>
+    {% else %}
+      <div class="al-hstat">
+        <div class="al-hstat-num" style="color:var(--ls-teal);">{{ items|length }}</div>
+        <div class="al-hstat-label">Campagnes</div>
+      </div>
+    {% endif %}
   </div>
+  {% endif %}
+
+  <!-- Main Card -->
+  <div class="al-card ls-in-3">
+    {% if items %}
+
+      {% if type == 'rdv' %}
+      <!-- ── RENDEZ-VOUS LIST ── -->
+      <!-- Column headers -->
+      <div style="display:flex; align-items:center; padding:0.75rem 1.5rem; gap:1rem; border-bottom:1px solid var(--ls-border); background:rgba(255,255,255,0.02);">
+        <div class="al-col-main" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">
+          {% if user.donneur_banque %}Hôpital{% else %}Donneur{% endif %}
+        </div>
+        <div class="al-col-meta" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Date & Heure</div>
+        <div class="al-col-stat" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Statut</div>
+        <div class="al-col-acts" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Actions</div>
+      </div>
+
+      {% for item in items %}
+      <div class="al-row">
+        <!-- Main: partner name -->
+        <div class="al-col-main">
+          {% if user.donneur_banque %}
+            <div class="al-title"><i class="fas fa-hospital-alt" style="color:var(--ls-red); margin-right:6px; font-size:0.8rem;"></i>{{ item.hopital.nom }}</div>
+            <div class="al-sub"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>{{ item.hopital.ville }}</div>
+          {% else %}
+            <div class="al-title">
+              <span class="ls-blood-tag sm" style="margin-right:8px;">{{ item.donneur.groupe_sanguin }}</span>
+              {{ item.donneur.user.username }}
+            </div>
+            <div class="al-sub"><i class="fas fa-city" style="margin-right:4px;"></i>{{ item.donneur.ville }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Date -->
+        <div class="al-col-meta">
+          <div style="font-size:0.85rem; font-weight:600; color:var(--ls-text);">{{ item.date_heure|date:"d/m/Y" }}</div>
+          <div style="font-size:0.75rem; color:var(--ls-muted);"><i class="far fa-clock" style="margin-right:4px;"></i>{{ item.date_heure|date:"H:i" }}</div>
+        </div>
+
+        <!-- Status pill -->
+        <div class="al-col-stat">
+          <span class="ls-pill {% if item.statut == 'P' %}ls-pill-orange{% elif item.statut == 'H' %}ls-pill-teal{% else %}ls-pill-grey{% endif %}">
+            {{ item.get_statut_display }}
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="al-col-acts">
+          <div class="al-actions">
+            {% if user.hopital_banque %}
+              <!-- Hospital: contact + confirm + cancel -->
+              <a href="{% url 'view_conversation' item.donneur.user.id %}" class="al-btn al-btn-chat" title="Contacter le donneur">
+                <i class="fas fa-comment-dots"></i>
+              </a>
+              {% if item.statut == 'P' %}
+              <a href="{% url 'update_rdv_status' item.pk 'H' %}" class="al-btn al-btn-confirm" title="Marquer comme honoré"
+                 onclick="return confirm('Marquer ce rendez-vous comme Honoré ?')">
+                <i class="fas fa-check"></i> Honoré
+              </a>
+              <a href="{% url 'update_rdv_status' item.pk 'A' %}" class="al-btn al-btn-cancel" title="Annuler"
+                 onclick="return confirm('Annuler ce rendez-vous ?')">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+              {% else %}
+              <div style="display:flex; gap:4px; align-items:center;">
+                <span class="al-btn" style="opacity:0.35; cursor:default; color:var(--ls-muted);">Clôturé</span>
+                <a href="{% url 'delete_rendezvous' item.pk %}" class="al-btn al-btn-delete" title="Supprimer de l'historique"
+                   onclick="return confirm('Supprimer ce rendez-vous de votre historique ?')">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+              {% endif %}
+
+            {% else %}
+              <!-- Donneur: cancel if still pending -->
+              {% if item.statut == 'P' %}
+              <a href="{% url 'cancel_rendezvous' item.pk %}" class="al-btn al-btn-cancel"
+                 onclick="return confirm('Annuler ce rendez-vous avec {{ item.hopital.nom }} ?')">
+                <i class="fas fa-calendar-times"></i> Annuler
+              </a>
+              {% elif item.statut == 'H' %}
+              <div style="display:flex; gap:4px;">
+                <span class="al-btn al-btn-confirm" style="cursor:default; pointer-events:none;">
+                  <i class="fas fa-check-circle"></i> Honoré
+                </span>
+                <a href="{% url 'delete_rendezvous' item.pk %}" class="al-btn al-btn-delete" title="Supprimer de l'historique"
+                   onclick="return confirm('Supprimer ce rendez-vous de votre historique ?')">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+              {% else %}
+              <div style="display:flex; gap:4px;">
+                <span class="al-btn" style="opacity:0.4; cursor:default; color:var(--ls-muted);">
+                  <i class="fas fa-ban"></i> Annulé
+                </span>
+                <a href="{% url 'delete_rendezvous' item.pk %}" class="al-btn al-btn-delete" title="Supprimer de l'historique"
+                   onclick="return confirm('Supprimer ce rendez-vous de votre historique ?')">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% else %}
+      <!-- ── CAMPAIGN LIST ── -->
+      <div style="display:flex; align-items:center; padding:0.75rem 1.5rem; gap:1rem; border-bottom:1px solid var(--ls-border); background:rgba(255,255,255,0.02);">
+        <div class="al-col-main" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Campagne</div>
+        <div class="al-col-meta" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Date & Lieu</div>
+        <div class="al-col-stat" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Remplissage</div>
+        <div class="al-col-acts" style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ls-muted);">Actions</div>
+      </div>
+
+      {% for item in items %}
+      {% widthratio item.places_prises item.capacite_totale 100 as pct %}
+      <div class="al-row">
+        <!-- Name + blood types -->
+        <div class="al-col-main">
+          <div class="al-title">{{ item.nom }}</div>
+          <div class="al-sub">Groupes : {{ item.groupes_cibles }}</div>
+          <!-- Mini progress bar -->
+          <div class="al-progress-track" style="max-width:180px;">
+            <div class="al-progress-fill" data-width="{{ pct }}"></div>
+          </div>
+        </div>
+
+        <!-- Date & location -->
+        <div class="al-col-meta">
+          <div style="font-size:0.85rem; font-weight:600; color:var(--ls-text);">{{ item.date|date:"d/m/Y" }}</div>
+          <div style="font-size:0.75rem; color:var(--ls-muted);"><i class="fas fa-map-marker-alt" style="color:var(--ls-red); margin-right:4px;"></i>{{ item.lieu }}</div>
+        </div>
+
+        <!-- Fill stat -->
+        <div class="al-col-stat">
+          <div style="font-weight:700; font-size:1rem; color:var(--ls-red);">{{ item.places_restantes }}</div>
+          <div style="font-size:0.7rem; color:var(--ls-muted);">places libres</div>
+          <div style="font-size:0.68rem; color:var(--ls-muted); margin-top:2px;">{{ item.places_prises }}/{{ item.capacite_totale }}</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="al-col-acts">
+          <div class="al-actions">
+            <a href="{% url 'edit_campaign' item.pk %}" class="al-btn al-btn-edit" title="Modifier">
+              <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{% url 'delete_campaign' item.pk %}" class="al-btn al-btn-delete" title="Supprimer"
+               onclick="return confirm('Supprimer la campagne « {{ item.nom }} » ? Cette action est irréversible.')">
+              <i class="fas fa-trash"></i> Supprimer
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+    {% else %}
+      <div class="al-empty">
+        <i class="fas fa-folder-open"></i>
+        <p style="margin:0; font-size:0.9rem;">Aucun élément trouvé.</p>
+      </div>
+    {% endif %}
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.al-progress-fill[data-width]').forEach(function(el) {
+    setTimeout(function() {
+      el.style.width = el.dataset.width + '%';
+    }, 100);
+  });
+</script>
 {% endblock %}

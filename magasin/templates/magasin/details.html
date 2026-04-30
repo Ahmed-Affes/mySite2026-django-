@@ -16,14 +16,8 @@
     <div class="row">
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                {% if product.image %}
-                <img src="{{ product.image }}" class="card-img-top" alt="{{ product.libelle }}" 
+                <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.libelle }}" 
                      style="height: 400px; object-fit: cover;">
-                {% else %}
-                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
-                    <i class="fas fa-image fa-4x text-muted"></i>
-                </div>
-                {% endif %}
             </div>
         </div>
         

@@ -61,6 +61,68 @@ class Produit(models.Model):
     def __str__(self):
         return self.libelle
 
+    @property
+    def image_url(self):
+        if self.image and hasattr(self.image, 'url'):
+            try:
+                # Check if file exists to avoid broken links
+                if self.image.storage.exists(self.image.name):
+                    return self.image.url
+            except Exception:
+                pass
+        
+        # 1. Premium Mapping with stable Unsplash IDs for common products
+        # These are high-quality, fixed photos that will never change
+        premium_photos = {
+            'airpods': 'photo-1588423771073-b8903fbb85b5',  # Generic AirPods
+            'watch': 'photo-1434494878577-86c23bcb06b9',    # Apple Watch
+            'iphone': 'photo-1510557880182-3d4d3cba35a5',
+            'phone': 'photo-1511707171634-5f897ff02aa9',
+            'ordinateur': 'photo-1496181133206-80ce9b88a853',
+            'laptop': 'photo-1496181133206-80ce9b88a853',
+            'pain': 'photo-1509440159596-0249088772ff',
+            'table': 'photo-1530018607912-eff2df114f11',
+            'savon': 'photo-1600857062241-75e54720121a',
+            'ballon': 'photo-1574629810360-7efbbe195018',
+            'football': 'photo-1574629810360-7efbbe195018',
+            'basket': 'photo-1519861531473-9200262188bf',
+            'canapé': 'photo-1493663284031-b7e3aefcae8e',
+            'sofa': 'photo-1493663284031-b7e3aefcae8e',
+            'vase': 'photo-1581783898377-1c85bf937427',
+            't-shirt': 'photo-1521572267360-ee0c2909d518',
+            'chaussures': 'photo-1542291026-7eec264c27ff',
+            'lunettes': 'photo-1572635196237-14b3f281503f',
+            'parfum': 'photo-1541643600914-78b084683601',
+            'bijoux': 'photo-1515562141207-7a88fb0ce33e',
+            'collier': 'photo-1515562141207-7a88fb0ce33e',
+        }
+        
+        query = self.libelle.lower()
+        for key, photo_id in premium_photos.items():
+            if key in query:
+                return f"https://images.unsplash.com/{photo_id}?auto=format&fit=crop&w=800&q=80"
+
+        # 2. Category Fallback with codes
+        cat_photos = {
+            'al': 'photo-1506617564534-20a2f500030c', # Food
+            'mb': 'photo-1524758631624-e2822e304c36', # Furniture
+            'sn': 'photo-1584622650111-993a426fbf0a', # Hygiene
+            'vs': 'photo-1516715662039-c52981cca40b', # Dishware
+            'vt': 'photo-1489987707025-afc232f7ea0f', # Clothing
+            'jx': 'photo-1539627831859-a911cf04b0c7', # Toys
+            'lg': 'photo-1522771739844-6a9f6d5f14af', # Bedroom
+            'bj': 'photo-1573408302382-9014b024400e', # Jewelry
+            'dc': 'photo-1534349762230-e0cadf78f5db', # Decor
+        }
+        
+        if self.categorie:
+            code = self.categorie.name.lower()
+            if code in cat_photos:
+                return f"https://images.unsplash.com/{cat_photos[code]}?auto=format&fit=crop&w=800&q=80"
+        
+        # 3. Final Fallback (Fixed per product ID)
+        return f"https://picsum.photos/seed/{self.id}/800/600"
+
 
 class Commande(models.Model):
     STATUS_CHOICES = [

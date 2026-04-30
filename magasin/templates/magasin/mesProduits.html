@@ -121,13 +121,7 @@
 
             <!-- Image -->
             <div class="card-img-wrapper">
-              {% if product.image %}
-              <img src="{{ product.image }}" class="product-img" alt="{{ product.libelle }}">
-              {% else %}
-              <div class="product-no-image">
-                <i class="fas fa-image fa-3x text-muted opacity-50"></i>
-              </div>
-              {% endif %}
+              <img src="{{ product.image_url }}" class="product-img" alt="{{ product.libelle }}">
               <div class="position-absolute top-0 end-0 m-2 d-flex gap-1 flex-column">
                 <span class="badge bg-primary">{{ product.get_type_display }}</span>
                 {% if not product.is_active %}

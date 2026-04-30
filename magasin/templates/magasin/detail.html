@@ -26,16 +26,9 @@
     <!-- Image -->
     <div class="col-md-5">
       <div class="card overflow-hidden">
-        {% if product.image %}
-        <img src="{{ product.image }}"
+        <img src="{{ product.image_url }}"
              class="w-100" style="height:380px;object-fit:cover;"
              alt="{{ product.libelle }}">
-        {% else %}
-        <div class="d-flex align-items-center justify-content-center"
-             style="height:380px;background:var(--bg-page);">
-          <i class="fas fa-image fa-5x text-muted opacity-40"></i>
-        </div>
-        {% endif %}
       </div>
     </div>
 

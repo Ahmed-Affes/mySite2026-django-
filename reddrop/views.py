@@ -266,6 +266,23 @@ def delete_campaign(request, pk):
     return redirect('blood_dashboard')
 
 @login_required
+def delete_reponse(request, pk):
+    """Allow a hospital to dismiss/delete a donor response — also cleans up the linked message thread."""
+    if not _is_hopital(request):
+        return redirect('blood_home')
+    reponse = get_object_or_404(ReponseAppel, pk=pk, demande__hopital=request.user.hopital_banque)
+    donor_user = reponse.donneur.user
+    hospital_user = request.user
+    # Also delete the message conversation between this hospital and the donor
+    Message.objects.filter(
+        (models.Q(expediteur=hospital_user) & models.Q(destinataire=donor_user)) |
+        (models.Q(expediteur=donor_user) & models.Q(destinataire=hospital_user))
+    ).delete()
+    reponse.delete()
+    messages.success(request, 'Réponse et conversation supprimées.')
+    return redirect('blood_dashboard')
+
+@login_required
 def update_rendezvous_status(request, pk, status):
     if not _is_hopital(request):
         return redirect('blood_home')
@@ -302,6 +319,34 @@ def all_rendezvous(request):
     else:
         return redirect('blood_home')
     return render(request, 'reddrop/all_list.html', {'items': rdvs, 'title': 'Tous mes Rendez-vous', 'type': 'rdv'})
+
+@login_required
+def delete_rendezvous(request, pk):
+    if _is_donneur(request):
+        rdv = get_object_or_404(RendezVous, pk=pk, donneur=request.user.donneur_banque)
+    elif _is_hopital(request):
+        rdv = get_object_or_404(RendezVous, pk=pk, hopital=request.user.hopital_banque)
+    else:
+        return redirect('blood_home')
+    
+    rdv.delete()
+    messages.success(request, 'Historique de rendez-vous supprimé.')
+    return redirect('all_rendezvous')
+
+@login_required
+def delete_don(request, pk):
+    if not _is_donneur(request):
+        return redirect('blood_home')
+    don = get_object_or_404(Don, pk=pk, donneur=request.user.donneur_banque)
+    don.delete()
+    messages.success(request, 'Historique de don supprimé.')
+    return redirect('blood_dashboard')
+
+@login_required
+def clear_notifications(request):
+    Notification.objects.filter(user=request.user).delete()
+    messages.success(request, 'Toutes les notifications ont été supprimées.')
+    return redirect('blood_dashboard')
 
 @login_required
 def all_my_campaigns(request):
@@ -353,7 +398,20 @@ def delete_conversation(request, user_id):
         (models.Q(expediteur=request.user) & models.Q(destinataire=other_user)) |
         (models.Q(expediteur=other_user) & models.Q(destinataire=request.user))
     ).delete()
-    messages.success(request, f'Conversation avec {other_user.username} supprime.')
+    # Also delete any ReponseAppel linked between these two users (either direction)
+    # Case 1: current user is hospital, other_user is donor
+    if _is_hopital(request) and hasattr(other_user, 'donneur_banque'):
+        ReponseAppel.objects.filter(
+            donneur=other_user.donneur_banque,
+            demande__hopital=request.user.hopital_banque
+        ).delete()
+    # Case 2: current user is donor, other_user is hospital
+    elif _is_donneur(request) and hasattr(other_user, 'hopital_banque'):
+        ReponseAppel.objects.filter(
+            donneur=request.user.donneur_banque,
+            demande__hopital=other_user.hopital_banque
+        ).delete()
+    messages.success(request, f'Conversation avec {other_user.username} supprimée.')
     return redirect('message_list')
 
 @login_required
@@ -396,3 +454,70 @@ def dashboard(request):
 
     messages.warning(request, "Votre compte n'est ni configuré en Hôpital ni en Donneur. Veuillez vous déconnecter.")
     return render(request, 'reddrop/dashboard.html', {'type': 'none'})
+@login_required
+def blood_statistics(request):
+    """View to display detailed analytics for both Donors and Hospitals."""
+    from django.db.models import Count, Sum, Q
+    from django.utils import timezone
+    import datetime
+    
+    stats = {}
+    # Reference rarity percentages (Global Average)
+    rarity_data = {'O+': 37.4, 'A+': 35.8, 'B+': 8.5, 'O-': 6.6, 'A-': 6.3, 'AB+': 3.4, 'B-': 1.5, 'AB-': 0.6}
+    
+    if _is_donneur(request):
+        donneur = request.user.donneur_banque
+        dons = Don.objects.filter(donneur=donneur)
+        total_poches = dons.aggregate(total=Sum('quantite'))['total'] or 0
+        
+        # Calculate rank/badge
+        rank = "Nouvel Espoir"
+        if total_poches >= 10: rank = "Héros d'Élite"
+        elif total_poches >= 5: rank = "Sauveur Régulier"
+        elif total_poches >= 1: rank = "Cœur Généreux"
+
+        stats = {
+            'role': 'donneur',
+            'donneur': donneur,
+            'rank': rank,
+            'rarity': rarity_data.get(donneur.groupe_sanguin, 5),
+            'total_dons': dons.count(),
+            'total_poches': total_poches,
+            'vies_sauvees': total_poches * 3,
+            'volume_total': total_poches * 450,
+            'evolution': dons.extra(select={'month': "strftime('%%m', date)"}).values('month').annotate(count=Count('id')).order_by('month'),
+            'part_par_lieu': dons.values('lieu').annotate(count=Count('id')),
+            'projected_vies': (total_poches + 4) * 3, # Projection if they continue for a year
+        }
+        
+    elif _is_hopital(request):
+        hopital = request.user.hopital_banque
+        stocks = StockSang.objects.filter(hopital=hopital)
+        campagnes = Campagne.objects.filter(hopital=hopital)
+        demandes = DemandeUrgente.objects.filter(hopital=hopital)
+        
+        # Stock Expiry Risk (within 7 days)
+        today = datetime.date.today()
+        seven_days_later = today + datetime.timedelta(days=7)
+        expiry_risk = stocks.filter(date_peremption__lte=seven_days_later, statut='OK').count()
+        
+        # Donor Loyalty (returning donors)
+        all_dons = Don.objects.filter(hopital=hopital)
+        total_dons_count = all_dons.count()
+        returning_donors = all_dons.values('donneur').annotate(dcount=Count('id')).filter(dcount__gt=1).count()
+        loyalty_rate = (returning_donors / total_dons_count * 100) if total_dons_count > 0 else 0
+        
+        stats = {
+            'role': 'hopital',
+            'hospital': hopital,
+            'stock_total': stocks.count(),
+            'expiry_risk': expiry_risk,
+            'loyalty_rate': round(loyalty_rate, 1),
+            'stock_per_type': stocks.values('groupe_sanguin').annotate(count=Count('id')).order_by('groupe_sanguin'),
+            'campaign_count': campagnes.count(),
+            'success_rate': round((campagnes.aggregate(s=Sum('places_prises'))['s'] or 0) / (campagnes.aggregate(s=Sum('capacite_totale'))['s'] or 1) * 100, 1),
+            'demandes_publiees': demandes.count(),
+            'most_requested': demandes.values('groupe_sanguin').annotate(count=Count('id')).order_by('-count')[:4],
+        }
+    
+    return render(request, 'reddrop/statistics.html', {'stats': stats})

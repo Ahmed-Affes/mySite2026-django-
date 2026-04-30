@@ -24,5 +24,10 @@ urlpatterns = [
     path('messages/<int:user_id>/', views.view_conversation, name='view_conversation'),
     path('messages/<int:user_id>/supprimer/', views.delete_conversation, name='delete_conversation'),
     path('rendezvous/<int:pk>/annuler/', views.cancel_rendezvous, name='cancel_rendezvous'),
+    path('rendezvous/<int:pk>/supprimer/', views.delete_rendezvous, name='delete_rendezvous'),
     path('rendezvous/<int:pk>/statut/<str:status>/', views.update_rendezvous_status, name='update_rdv_status'),
+    path('reponses/<int:pk>/supprimer/', views.delete_reponse, name='delete_reponse'),
+    path('don/<int:pk>/supprimer/', views.delete_don, name='delete_don'),
+    path('notifications/tout-effacer/', views.clear_notifications, name='clear_notifications'),
+    path('statistiques/', views.blood_statistics, name='blood_statistics'),
 ]
