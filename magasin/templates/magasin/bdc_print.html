@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bon de Commande {{ bdc.reference }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #fff; padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .invoice-header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 40px; }
+        .company-logo { font-size: 2rem; font-weight: bold; color: #0d6efd; }
+        .status-stamp { 
+            position: absolute; top: 100px; right: 50px; 
+            border: 4px solid; padding: 10px 20px; 
+            transform: rotate(-15deg); font-weight: bold; 
+            text-transform: uppercase; opacity: 0.5;
+        }
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body {% if 'print' in request.GET %}onload="window.print()"{% endif %}>
+
+    <div class="no-print mb-4 d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-primary">Imprimer / Sauvegarder PDF</button>
+        <a href="{% url 'bdc_liste' %}" class="btn btn-outline-secondary">Retour</a>
+    </div>
+
+    <div class="invoice-box position-relative">
+        <div class="invoice-header d-flex justify-content-between align-items-center">
+            <div>
+                <div class="company-logo">MyMagasin Corp.</div>
+                <p class="text-muted mb-0">123 Rue de l'Industrie, Tunis, Tunisie<br>Email: contact@mymagasin.tn | Tel: +216 71 000 000</p>
+            </div>
+            <div class="text-end">
+                <h1 class="fw-bold">BON DE COMMANDE</h1>
+                <h4 class="text-muted">Réf: {{ bdc.reference }}</h4>
+                <p>Date: {{ bdc.date_creation|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+
+        <div class="status-stamp 
+            {% if bdc.statut == 'recu' %}text-success border-success
+            {% elif bdc.statut == 'annule' %}text-danger border-danger
+            {% else %}text-primary border-primary{% endif %}">
+            {{ bdc.get_statut_display }}
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-6">
+                <h6 class="text-muted text-uppercase fw-bold">FOURNISSEUR</h6>
+                <div class="border-start border-4 border-primary ps-3">
+                    <h5 class="fw-bold mb-1">{{ bdc.fournisseur.nom }}</h5>
+                    <p class="mb-0">{{ bdc.fournisseur.adresse }}</p>
+                    <p class="mb-0">Email: {{ bdc.fournisseur.email }}</p>
+                    <p class="mb-0">Tel: {{ bdc.fournisseur.telephone }}</p>
+                </div>
+            </div>
+            <div class="col-6 text-end">
+                <h6 class="text-muted text-uppercase fw-bold">DESTINATAIRE</h6>
+                <div class="pe-3">
+                    <h5 class="fw-bold mb-1">Entrepôt Central MyMagasin</h5>
+                    <p class="mb-0">Zone Industrielle, Lot 42</p>
+                    <p class="mb-0">Tunis, 1000</p>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="py-3">Description du Produit</th>
+                    <th class="text-center py-3">Quantité</th>
+                    <th class="text-end py-3">Prix Unitaire Estimé</th>
+                    <th class="text-end py-3">Montant Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in bdc.lignes.all %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ ligne.produit.libelle }}</div>
+                        <small class="text-muted">{{ ligne.produit.categorie.name }}</small>
+                    </td>
+                    <td class="text-center">{{ ligne.quantite }}</td>
+                    <td class="text-end">{{ ligne.prix_achat|default:ligne.produit.prix_achat }} DT</td>
+                    <td class="text-end fw-bold">{{ ligne.total_ligne }} DT</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="row mt-5">
+            <div class="col-7">
+                <h6 class="fw-bold">Notes & Instructions :</h6>
+                <p class="small text-muted">{{ bdc.notes|default:"Aucune instruction particulière." }}</p>
+            </div>
+            <div class="col-5">
+                <div class="card bg-light border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Sous-total Hors Taxes :</span>
+                            <span class="fw-bold">{{ bdc.total_bdc }} DT</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>TVA (0%) :</span>
+                            <span class="fw-bold">0.00 DT</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between h4 fw-bold">
+                            <span>TOTAL :</span>
+                            <span class="text-primary">{{ bdc.total_bdc }} DT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 pt-5 border-top text-center small text-muted">
+            <p>Ce document est généré électroniquement et est valable sans signature.<br>MyMagasin Corp. — SARL au capital de 100.000 DT</p>
+        </div>
+    </div>
+</body>
+</html>
