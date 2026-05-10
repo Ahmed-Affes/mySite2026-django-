@@ -1,0 +1,118 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Gérer les Fournisseurs — {{ product.libelle }}{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-truck-loading me-2"></i>Sources d'Approvisionnement</h2>
+            <p class="text-muted">Gérez les fournisseurs et les prix d'achat pour : <strong>{{ product.libelle }}</strong></p>
+        </div>
+        <a href="{% url 'detail' product.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Retour au Produit
+        </a>
+    </div>
+
+    <form method="post" class="card shadow-sm">
+        {% csrf_token %}
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2 text-primary"></i>Liste des Fournisseurs</h5>
+        </div>
+        
+        <div class="card-body">
+            {{ formset.management_form }}
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="sourcesTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width: 35%;">Fournisseur</th>
+                            <th>Prix d'Achat (DT)</th>
+                            <th>Délai (Jours)</th>
+                            <th class="text-center">Préféré ?</th>
+                            <th class="text-center">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody id="formset-container">
+                        {% for form in formset %}
+                        <tr class="formset-row">
+                            {{ form.id }}
+                            <td>
+                                {{ form.fournisseur }}
+                                {% if form.fournisseur.errors %}
+                                    <div class="text-danger small">{{ form.fournisseur.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ form.prix_achat }}
+                            </td>
+                            <td>
+                                {{ form.delai_livraison_jours }}
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check d-inline-block">
+                                    {{ form.is_preferred }}
+                                </div>
+                            </td>
+                            <td class="text-center text-danger">
+                                {% if formset.can_delete %}
+                                    {{ form.DELETE }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="add-form">
+                    <i class="fas fa-plus me-1"></i>Ajouter un autre fournisseur
+                </button>
+            </div>
+        </div>
+
+        <div class="card-footer bg-light py-3 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary px-5">
+                <i class="fas fa-save me-2"></i>Enregistrer les sources
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('add-form').addEventListener('click', function() {
+        const container = document.getElementById('formset-container');
+        const totalForms = document.getElementById('id_sources-TOTAL_FORMS');
+        const formNum = parseInt(totalForms.value);
+        
+        const lastRow = container.querySelector('.formset-row:last-child');
+        const newRow = lastRow.cloneNode(true);
+        
+        // Update indices
+        newRow.innerHTML = newRow.innerHTML.replace(/sources-\d+-/g, `sources-${formNum}-`);
+        newRow.innerHTML = newRow.innerHTML.replace(/id_sources-\d+-/g, `id_sources-${formNum}-`);
+        
+        // Clear values
+        newRow.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select').forEach(input => {
+            input.value = '';
+        });
+        newRow.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.checked = false;
+        });
+
+        container.appendChild(newRow);
+        totalForms.value = formNum + 1;
+        
+        // Re-init TomSelect for the new row if needed
+        if (window.TomSelect) {
+            newRow.querySelectorAll('.tom-select').forEach(el => {
+                if (el.tomselect) el.tomselect.destroy();
+                new TomSelect(el, { create: false, sortField: { field: "text", direction: "asc" } });
+            });
+        }
+    });
+</script>
+{% endblock %}

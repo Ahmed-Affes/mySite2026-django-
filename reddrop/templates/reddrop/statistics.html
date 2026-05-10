@@ -197,7 +197,8 @@
                 <span class="ls-pill ls-pill-red">{{ item.count }} demandes</span>
               </div>
               <div class="ls-progress-track" style="height:8px;">
-                <div class="ls-progress-fill" style="width:{% widthratio item.count stats.demandes_publiees 100 %}%"></div>
+                {% widthratio item.count stats.demandes_publiees 100 as w_ratio %}
+                <div class="ls-progress-fill dynamic-width" data-width="{{ w_ratio }}"></div>
               </div>
             </div>
           {% endfor %}
@@ -210,6 +211,13 @@
 
 {% block extra_js %}
 <script>
+  // Apply dynamic widths to bypass IDE CSS parser errors
+  document.querySelectorAll('.dynamic-width').forEach(el => {
+    if (el.getAttribute('data-width')) {
+      el.style.width = el.getAttribute('data-width') + '%';
+    }
+  });
+
   // Chart colors
   const colors = ['#E8192C', '#14B8A6', '#F59E0B', '#6366F1', '#A855F7', '#EC4899', '#0EA5E9', '#84CC16'];
   const chartOptions = {
@@ -223,15 +231,22 @@
     }
   };
 
-  {% if stats.role == 'donneur' %}
+  // {% if stats.role == 'donneur' %}
     // Donor Trends
+    const donorLabels = [];
+    const donorData = [];
+    // {% for item in stats.evolution %}
+    donorLabels.push("Mois {{ item.month }}");
+    donorData.push(Number("{{ item.count }}"));
+    // {% endfor %}
+
     new Chart(document.getElementById('donorChart'), {  
       type: 'line',
       data: {
-        labels: [{% for item in stats.evolution %}'Mois {{ item.month }}',{% endfor %}],
+        labels: donorLabels,
         datasets: [{
           label: 'Vos Dons',
-          data: [{% for item in stats.evolution %}{{ item.count }},{% endfor %}],
+          data: donorData,
           borderColor: '#E8192C',
           backgroundColor: 'rgba(232, 25, 44, 0.1)',
           fill: true,
@@ -242,12 +257,19 @@
     });
 
     // Location pie
+    const locationLabels = [];
+    const locationData = [];
+    // {% for item in stats.part_par_lieu %}
+    locationLabels.push("{{ item.lieu }}");
+    locationData.push(Number("{{ item.count }}"));
+    // {% endfor %}
+
     new Chart(document.getElementById('locationChart'), {
       type: 'doughnut',
       data: {
-        labels: [{% for item in stats.part_par_lieu %}'{{ item.lieu }}',{% endfor %}],
+        labels: locationLabels,
         datasets: [{
-          data: [{% for item in stats.part_par_lieu %}{{ item.count }},{% endfor %}],
+          data: locationData,
           backgroundColor: colors,
           borderWidth: 0
         }]
@@ -255,14 +277,21 @@
       options: { plugins: { legend: { position: 'bottom' } } }
     });
 
-  {% elif stats.role == 'hopital' %}
+  // {% elif stats.role == 'hopital' %}
     // Stock Radar/Pie
+    const stockLabels = [];
+    const stockData = [];
+    // {% for item in stats.stock_per_type %}
+    stockLabels.push("{{ item.groupe_sanguin }}");
+    stockData.push(Number("{{ item.count }}"));
+    // {% endfor %}
+
     new Chart(document.getElementById('stockChart'), {
       type: 'polarArea',
       data: {
-        labels: [{% for item in stats.stock_per_type %}'{{ item.groupe_sanguin }}',{% endfor %}],
+        labels: stockLabels,
         datasets: [{
-          data: [{% for item in stats.stock_per_type %}{{ item.count }},{% endfor %}],
+          data: stockData,
           backgroundColor: colors.map(c => c + 'AA'),
           borderColor: 'transparent'
         }]
@@ -272,6 +301,6 @@
         scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } }
       }
     });
-  {% endif %}
+  // {% endif %}
 </script>
 {% endblock %}

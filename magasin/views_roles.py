@@ -79,8 +79,15 @@ def employe_required(view_func):
 
 def role_context(request):
     user = request.user
-    return {
+    context = {
         'user_role':       get_role_label(user),
         'is_admin_user':   is_admin(user),
         'is_employe_user': is_employe(user),
+        'unread_notifications_count': 0,
     }
+    if user.is_authenticated:
+        # Avoid circular import by importing here if necessary, 
+        # but since this is magasin app, we can import Notification
+        from .models import Notification
+        context['unread_notifications_count'] = Notification.objects.filter(destinataire=user, lu=False).count()
+    return context

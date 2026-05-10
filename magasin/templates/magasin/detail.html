@@ -73,20 +73,19 @@
           <h6 class="form-label mb-2">Description</h6>
           <p class="text-muted mb-4">{{ product.description }}</p>
 
-          {% if product.fournisseur %}
+          {% if product.sources.exists %}
           <div class="card border-0 p-3 mb-4" style="background:var(--bg-page);">
-            <div class="d-flex align-items-center gap-3">
-              <div class="avatar-circle">{{ product.fournisseur.nom|first|upper }}</div>
-              <div>
-                <div class="form-label mb-0">Fournisseur</div>
-                <div class="fw-bold">{{ product.fournisseur.nom }}</div>
-                {% if product.fournisseur.email %}
-                <a href="mailto:{{ product.fournisseur.email }}"
-                   class="small text-muted text-decoration-none">
-                  <i class="fas fa-envelope me-1"></i>{{ product.fournisseur.email }}
-                </a>
-                {% endif %}
+            <h6 class="form-label mb-2"><i class="fas fa-truck me-2"></i>Nos Sources d'Approvisionnement</h6>
+            <div class="list-group list-group-flush bg-transparent">
+              {% for source in product.sources.all %}
+              <div class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-bold">{{ source.fournisseur.nom }}</span>
+                  <small class="text-muted d-block">Livraison sous {{ source.delai_livraison_jours }} jours</small>
+                </div>
+                <span class="badge bg-light text-dark border">{{ source.prix_achat }} DT (Achat)</span>
               </div>
+              {% endfor %}
             </div>
           </div>
           {% endif %}
@@ -120,6 +119,20 @@
               <i class="fas fa-arrow-left"></i> Retour
             </a>
 
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'produit_sources_manage' product.id %}" class="btn btn-outline-primary btn-lg">
+              <i class="fas fa-truck-loading me-2"></i>Gérer les fournisseurs
+            </a>
+            <a href="{% url 'produit_edit' product.id %}" class="btn btn-outline-secondary btn-lg">
+              <i class="fas fa-edit me-1"></i> Modifier
+            </a>
+            {% if user.is_superuser %}
+            <a href="{% url 'produit_delete' product.id %}" class="btn btn-outline-danger btn-lg">
+              <i class="fas fa-trash me-1"></i> Supprimer
+            </a>
+            {% endif %}
+            {% endif %}
+
           </div>
 
         </div>
@@ -127,6 +140,31 @@
     </div>
 
   </div>
+
+  <!-- ── Recommended Products ───────────────────────────────── -->
+  {% if recommended %}
+  <div class="mt-4">
+    <h5 class="mb-3 fw-bold">
+      <i class="fas fa-thumbs-up me-2" style="color:var(--navy);"></i>Vous aimerez aussi
+    </h5>
+    <div class="recommended-scroll-wrapper">
+      <div class="recommended-scroll">
+        {% for p in recommended %}
+        <a href="{% url 'detail' p.pk %}" class="recommended-card text-decoration-none">
+          <div class="rec-img-wrap">
+            <img src="{{ p.image_url }}" alt="{{ p.libelle }}">
+          </div>
+          <div class="rec-info">
+            <p class="rec-name">{{ p.libelle }}</p>
+            <p class="rec-path text-muted small">{{ p.image }}</p>
+            <p class="rec-price fw-bold">{{ p.prix }} DT.</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Reviews Section -->
   <div class="row mt-4">
@@ -209,6 +247,88 @@
 .star-rating label:hover,
 .star-rating label:hover ~ label {
   color: #ffc107;
+}
+
+/* ── Recommended horizontal scroll ───────────────────── */
+.recommended-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 4px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 3px;
+}
+.recommended-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  width: max-content;
+}
+.recommended-card {
+  display: flex;
+  flex-direction: column;
+  width: 160px;
+  border-right: 1px solid #e0e0e0;
+  padding: 10px;
+  color: inherit;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.recommended-card:last-child {
+  border-right: none;
+}
+.recommended-card:hover {
+  background: #f8f9fa;
+}
+.rec-img-wrap {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.rec-img-wrap img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.rec-info {
+  padding: 0 2px;
+}
+.rec-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-path {
+  font-size: 0.72rem;
+  color: #888 !important;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-price {
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 0;
 }
 </style>
 {% endblock %}
