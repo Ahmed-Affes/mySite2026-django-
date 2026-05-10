@@ -1,0 +1,75 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}Connexion — RedDrop{% endblock %}
+
+{% block content %}
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem 0;">
+  <div class="ls-in" style="width: 100%; max-width: 440px;">
+    
+    <!-- Branding Header -->
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+      <div style="width: 72px; height: 72px; background: var(--ls-red); border-radius: 18px; 
+                  display: inline-flex; align-items: center; justify-content: center; 
+                  font-size: 1.8rem; color: #fff; margin-bottom: 1.5rem;
+                  box-shadow: 0 0 30px var(--ls-red-glow);">
+        <i class="fas fa-heartbeat"></i>
+      </div>
+      <h2 style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 0.5rem;">Bon retour !</h2>
+      <p style="color: var(--ls-muted); font-size: 0.95rem;">Connectez-vous pour continuer sur RedDrop.</p>
+    </div>
+
+    <!-- Login Panel -->
+    <div class="ls-panel" style="box-shadow: var(--ls-shadow); border: 1px solid var(--ls-border);">
+      <div class="ls-panel-body" style="padding: 2.5rem;">
+        
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="ls-alert ls-alert-danger" style="margin-bottom: 1.5rem;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ form.non_field_errors|join:', ' }}</span>
+          </div>
+          {% endif %}
+
+          <div class="ls-field">
+            <label class="ls-label">Nom d'utilisateur</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+            <div class="ls-field-error">{{ form.username.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+
+          <div class="ls-field">
+            <label class="ls-label">Mot de passe</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+            <div class="ls-field-error">{{ form.password.errors|join:', ' }}</div>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="ls-btn ls-btn-primary ls-btn-full" style="padding: 1rem; margin-top: 1rem; font-size: 1rem;">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+          </button>
+        </form>
+
+        <hr class="ls-divider" style="margin: 2rem 0;">
+
+        <div style="text-align: center;">
+          <p style="color: var(--ls-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">Pas encore de compte ?</p>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="{% url 'register_donneur' %}" class="ls-btn ls-btn-ghost" style="flex: 1; justify-content: center; font-size: 0.8rem; padding: 0.75rem;">
+              <i class="fas fa-tint"></i> S'inscrire Donneur
+            </a>
+            <a href="{% url 'register_hopital' %}" class="ls-btn ls-btn-ghost" style="flex: 1; justify-content: center; font-size: 0.8rem; padding: 0.75rem;">
+              <i class="fas fa-hospital"></i> S'inscrire Hôpital
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

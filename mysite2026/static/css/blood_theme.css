@@ -1,0 +1,220 @@
+/* blood_theme.css - Premium Medical UI for BloodConnect */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --b-primary: #E53935;
+  --b-primary-dark: #C62828;
+  --b-primary-light: #FFEBEE;
+  
+  --b-bg: #F8FAFC;
+  --b-surface: #FFFFFF;
+  --b-text: #1E293B;
+  --b-text-muted: #64748B;
+  
+  --b-border: #E2E8F0;
+  --b-radius: 16px;
+  --b-shadow: 0 10px 25px -5px rgba(229, 57, 53, 0.1), 0 8px 10px -6px rgba(229, 57, 53, 0.1);
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--b-bg);
+  color: var(--b-text);
+  margin: 0;
+  padding: 0;
+}
+
+/* Navbar */
+.blood-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--b-border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 1rem 0;
+}
+.blood-nav .navbar-brand {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--b-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.blood-nav .nav-link {
+  font-weight: 500;
+  color: var(--b-text-muted);
+  border-radius: 8px;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.3s ease;
+}
+.blood-nav .nav-link:hover, .blood-nav .nav-link.active {
+  background: var(--b-primary-light);
+  color: var(--b-primary);
+}
+
+/* Buttons */
+.btn-blood {
+  background: var(--b-primary);
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(229, 57, 53, 0.2);
+}
+.btn-blood:hover {
+  background: var(--b-primary-dark);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--b-shadow);
+}
+.btn-blood-outline {
+  background: transparent;
+  color: var(--b-primary);
+  border: 2px solid var(--b-primary);
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.3s ease;
+}
+.btn-blood-outline:hover {
+  background: var(--b-primary);
+  color: white;
+}
+
+/* Hero Section */
+.blood-hero {
+  background: linear-gradient(135deg, var(--b-primary) 0%, var(--b-primary-dark) 100%);
+  border-radius: var(--b-radius);
+  color: white;
+  padding: 5rem 3rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--b-shadow);
+}
+.blood-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+}
+.blood-hero h1 {
+  font-weight: 700;
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+.blood-hero p {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 600px;
+}
+
+/* Cards */
+.blood-card {
+  background: var(--b-surface);
+  border-radius: var(--b-radius);
+  border: 1px solid var(--b-border);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+.blood-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+  border-color: var(--b-primary-light);
+}
+.blood-card-icon {
+  width: 60px; height: 60px;
+  background: var(--b-primary-light);
+  color: var(--b-primary);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Badges */
+.blood-badge {
+  background: var(--b-primary-light);
+  color: var(--b-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Forms */
+.blood-form-control,
+.form-control,
+.form-select {
+  border: 1px solid var(--b-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+  font-family: 'Outfit', sans-serif;
+  color: var(--b-text);
+  background-color: #FAFAFA;
+}
+.blood-form-control:focus,
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--b-primary);
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.12);
+  outline: none;
+  background-color: white;
+}
+
+/* Progress Bars */
+.progress {
+  background-color: var(--b-primary-light);
+}
+
+/* Alerts */
+.alert {
+  border-radius: 12px;
+}
+
+/* Tables */
+.table thead th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--b-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--b-border);
+}
+.table > :not(caption) > * > * {
+  padding: 0.85rem 0.75rem;
+}
+
+/* Badges */
+.badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+}
+
+/* Animation */
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
+}
+.pulse-red {
+  animation: pulse-red 1.5s infinite;
+}
+
+/* Fade in */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}

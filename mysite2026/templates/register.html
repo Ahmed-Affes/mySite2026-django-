@@ -1,0 +1,375 @@
+{% extends 'magasin/base.html' %}
+
+{% block title %}Créer un compte — MyMagasin{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: var(--navy-dark);
+    min-height: 100vh;
+  }
+
+  .register-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .register-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 450px;
+    padding: 0;
+    overflow: hidden;
+    animation: slideUp 0.5s ease-out;
+  }
+
+  [data-theme="dark"] .register-card {
+    background: #2d3561;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .register-header {
+    background: var(--navy-dark);
+    color: white;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .register-header-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: bounce 0.6s ease-out;
+  }
+
+  .register-header h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .register-header p {
+    font-size: 0.95rem;
+    opacity: 0.95;
+  }
+
+  .register-body {
+    padding: 2rem 1.5rem;
+  }
+
+  [data-theme="dark"] .register-body {
+    color: #fff;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  [data-theme="dark"] .form-label {
+    color: #e0e0e0;
+  }
+
+  .form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+
+  [data-theme="dark"] .form-control {
+    background: #1a1f3a;
+    border-color: #3d4567;
+    color: #fff;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  [data-theme="dark"] .form-control:focus {
+    background: #2d3561;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .form-text {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.4rem;
+  }
+
+  [data-theme="dark"] .form-text {
+    color: #aaa;
+  }
+
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-check-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+
+  .form-check-label {
+    color: #666;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  [data-theme="dark"] .form-check-label {
+    color: #ccc;
+  }
+
+  .form-check-label a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  .form-check-label a:hover {
+    color: #764ba2;
+  }
+
+  .btn-register {
+    background: var(--navy-dark);
+    color: white;
+    border: none;
+    padding: 0.9rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+  }
+
+  .btn-register:active {
+    transform: translateY(0);
+  }
+
+  .error-message {
+    background: #fff5f5;
+    border: 2px solid #fc8181;
+    color: #c53030;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  [data-theme="dark"] .error-message {
+    background: #742a2a;
+    border-color: #9b2c2c;
+    color: #fed7d7;
+  }
+
+  .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+  }
+
+  [data-theme="dark"] .invalid-feedback {
+    color: #ff8888;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--navy-dark);
+    margin: 1.5rem 0;
+  }
+
+  [data-theme="dark"] .divider {
+    background: var(--navy-dark);
+  }
+
+  .login-link {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  [data-theme="dark"] .login-link {
+    color: #ccc;
+  }
+
+  .login-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  .login-link a:hover {
+    color: #764ba2;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  @media (max-width: 576px) {
+    .register-card {
+      max-width: 100%;
+    }
+
+    .register-header {
+      padding: 1.5rem;
+    }
+
+    .register-header-icon {
+      font-size: 2.5rem;
+    }
+
+    .register-body {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-wrapper">
+  <div class="register-card">
+    
+    <!-- Header -->
+    <div class="register-header">
+      <div class="register-header-icon">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <h3>Créer un compte</h3>
+      <p>Rejoignez notre communauté</p>
+    </div>
+
+    <!-- Form -->
+    <div class="register-body">
+      
+      {% if form.non_field_errors %}
+      <div class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>Veuillez corriger les erreurs ci-dessous.</div>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="id_username" class="form-label">
+            <i class="fas fa-user" style="color: #667eea;"></i>Nom d'utilisateur
+          </label>
+          <input type="text" name="username" id="id_username"
+                 class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                 placeholder="Choisissez un nom d'utilisateur"
+                 value="{{ form.username.value|default:'' }}" required autofocus>
+          {% if form.username.errors %}
+            <div class="invalid-feedback">{{ form.username.errors|join:", " }}</div>
+          {% else %}
+            <div class="form-text">150 caractères max. Lettres, chiffres et @/./+/-/_ uniquement.</div>
+          {% endif %}
+        </div>
+
+        <!-- Password 1 -->
+        <div class="form-group">
+          <label for="id_password1" class="form-label">
+            <i class="fas fa-lock" style="color: #667eea;"></i>Mot de passe
+          </label>
+          <input type="password" name="password1" id="id_password1"
+                 class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                 placeholder="Créez un mot de passe fort" required>
+          {% if form.password1.errors %}
+            <div class="invalid-feedback">{{ form.password1.errors|join:", " }}</div>
+          {% else %}
+            <div class="form-text">
+              <i class="fas fa-info-circle me-1"></i>Minimum 8 caractères, non entièrement numérique.
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Password 2 -->
+        <div class="form-group">
+          <label for="id_password2" class="form-label">
+            <i class="fas fa-lock-check" style="color: #667eea;"></i>Confirmation du mot de passe
+          </label>
+          <input type="password" name="password2" id="id_password2"
+                 class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                 placeholder="Répétez votre mot de passe" required>
+          {% if form.password2.errors %}
+            <div class="invalid-feedback">{{ form.password2.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Terms -->
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="terms" required>
+          <label class="form-check-label" for="terms">
+            J'accepte les <a href="#" onclick="return false;">conditions d'utilisation</a>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-register">
+          <i class="fas fa-user-plus me-2"></i>Créer mon compte
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <p class="login-link">
+        Vous avez déjà un compte ?
+        <a href="{% url 'login' %}">Se connecter</a>
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

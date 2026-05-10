@@ -1,0 +1,317 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Bienvenue — MyMagasin{% endblock %}
+
+{# ── Hide the navbar on the home page ── #}
+{% block navbar %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: var(--bg-page);
+    min-height: 100vh;
+  }
+  
+  [data-theme="dark"] body {
+    background: var(--bg-page);
+  }
+
+  .home-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  /* Header Section */
+  .home-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    animation: slideInDown 0.6s ease-out;
+  }
+
+  .home-header h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: var(--navy-dark);
+    -webkit-background-clip: text;
+    color: var(--text-main);
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  [data-theme="dark"] .home-header h1 {
+    background: var(--navy-dark);
+    -webkit-background-clip: text;
+    color: var(--text-main);
+    background-clip: text;
+  }
+
+  .home-header p {
+    font-size: 1.3rem;
+    color: #666;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  [data-theme="dark"] .home-header p {
+    color: #ccc;
+  }
+
+  /* Badge */
+  .home-badge {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    background: var(--navy-dark);
+    color: white;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  /* Floating theme toggle */
+  .home-theme-btn {
+    position: fixed;
+    top: 1.2rem; right: 1.2rem;
+    z-index: 999;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    background: white;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  [data-theme="dark"] .home-theme-btn {
+    background: #2d3561;
+    color: #a8edea;
+    border-color: rgba(168, 237, 234, 0.3);
+    box-shadow: 0 4px 20px rgba(168, 237, 234, 0.15);
+  }
+
+  .home-theme-btn:hover {
+    transform: rotate(20deg) scale(1.1);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.4);
+  }
+
+  /* App selector cards */
+  .app-card {
+    text-decoration: none !important;
+    display: block;
+    perspective: 1000px;
+  }
+
+  .app-card .card {
+    height: 100%;
+    border-radius: 20px !important;
+    border: none !important;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  [data-theme="dark"] .app-card .card {
+    background: #2d3561;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .app-card .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--navy-dark);
+  }
+
+  .app-card:hover .card {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme="dark"] .app-card:hover .card {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .app-card .card-body {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .app-icon-circle {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto 1.5rem !important;
+    font-size: 2rem !important;
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .app-card h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+  }
+
+  [data-theme="dark"] .app-card h5 {
+    color: #fff;
+  }
+
+  .app-card p {
+    color: #999;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  [data-theme="dark"] .app-card p {
+    color: #bbb;
+  }
+
+  .app-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 800px;
+    width: 100%;
+    animation: fadeIn 1s ease-out 0.2s both;
+  }
+
+  /* Animations */
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .home-header h1 {
+      font-size: 2.5rem;
+    }
+
+    .home-header p {
+      font-size: 1.1rem;
+    }
+
+    .app-cards-container {
+      gap: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Floating theme toggle #}
+<button class="home-theme-btn" id="homeThemeToggle" title="Changer le thème">
+  <i class="fas fa-moon" id="homeThemeIcon"></i>
+</button>
+
+<div class="home-wrapper fade-in">
+
+  <!-- ── Header ───────────────────────────────────────── -->
+  <div class="home-header">
+    <div class="home-badge">
+      <i class="fas fa-rocket me-2"></i>BIENVENUE
+    </div>
+    <h1>MyPortal</h1>
+    <p>Explorez nos applications innovantes et gérez votre expérience en un seul endroit.</p>
+  </div>
+
+  <!-- ── App Selector ───────────────────────────────────── -->
+  <div class="app-cards-container">
+
+    <!-- MyMagasin -->
+    <div>
+      <a href="{% url 'index' %}" class="app-card">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="app-icon-circle" style="background: var(--navy-dark);">
+              <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h5>MyMagasin</h5>
+            <p>
+              Découvrez notre catalogue complet, gérez vos commandes et explorez les meilleures offres.
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- BloodConnect -->
+    <div>
+      <a href="{% url 'blood_home' %}" class="app-card">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="app-icon-circle" style="background: var(--navy-dark);">
+              <i class="fas fa-heart-pulse"></i>
+            </div>
+            <h5>BloodConnect</h5>
+            <p>
+              Participez à notre mission de sauvetage. Donnez du sang et aidez une communauté.
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var btn  = document.getElementById('homeThemeToggle');
+    var icon = document.getElementById('homeThemeIcon');
+    var html = document.documentElement;
+
+    function syncIcon() {
+      icon.className = html.getAttribute('data-theme') === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    syncIcon();
+
+    btn.addEventListener('click', function () {
+      var newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      syncIcon();
+    });
+  })();
+</script>
+{% endblock %}

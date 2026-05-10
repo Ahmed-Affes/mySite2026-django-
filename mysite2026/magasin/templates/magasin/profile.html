@@ -1,0 +1,46 @@
+{% extends 'magasin/base.html' %}
+
+{% block title %}Mon Profil — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-user-circle me-2"></i>Mon Profil</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nom d'utilisateur</label>
+                            <input type="text" class="form-control bg-light" value="{{ request.user.username }}" disabled>
+                            <small class="text-muted">Le nom d'utilisateur ne peut pas être modifié.</small>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Prénom</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Nom</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Adresse Email</label>
+                            {{ form.email }}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                            <a href="{% url 'mes_commandes' %}" class="btn btn-outline-secondary">Voir mon historique de commandes</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

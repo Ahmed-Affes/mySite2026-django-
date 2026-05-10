@@ -1,0 +1,96 @@
+{% extends 'reddrop/base.html' %}
+{% load static %}
+{% block title %}BloodConnect — Plateforme de don de sang{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<div class="ls-hero ls-in">
+  <div class="ls-hero-eyebrow">Réseau de Solidarité</div>
+  <h1>Donnez du sang,<br><span>sauvez une vie.</span></h1>
+  <p>RedDrop connecte en temps réel les donneurs aux hôpitaux en crise. Notre algorithme identifie instantanément les compatibilités selon votre groupe sanguin et votre ville.</p>
+  <div class="ls-hero-actions">
+    {% if not request.user.is_authenticated %}
+    <a href="{% url 'register_donneur' %}" class="ls-btn ls-btn-primary ls-btn-lg">
+      <i class="fas fa-tint"></i> Devenir Donneur
+    </a>
+    <a href="{% url 'register_hopital' %}" class="ls-btn ls-btn-ghost ls-btn-lg">
+      <i class="fas fa-hospital"></i> Portail Hôpital
+    </a>
+    {% else %}
+    <a href="{% url 'blood_demandes' %}" class="ls-btn ls-btn-primary ls-btn-lg">
+      <i class="fas fa-ambulance"></i> Voir les Urgences
+    </a>
+    <a href="{% url 'blood_dashboard' %}" class="ls-btn ls-btn-ghost ls-btn-lg">
+      <i class="fas fa-chart-line"></i> Mon Dashboard
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── FEATURE NUMBERS ── -->
+<p class="ls-section-title ls-in-2">Ce qui nous rend différents</p>
+<div class="ls-feature-strip ls-in-2">
+  <div class="ls-feature">
+    <div class="ls-feature-num">01</div>
+    <h5>Compatibilité Intelligente</h5>
+    <p>Le système analyse automatiquement les compatibilités entre groupes sanguins — aucune approximation.</p>
+  </div>
+  <div class="ls-feature">
+    <div class="ls-feature-num">02</div>
+    <h5>Alertes Ultra-Rapides</h5>
+    <p>Les hôpitaux publient en 1 clic. Les donneurs compatibles dans leur ville sont alertés immédiatement sur leur dashboard.</p>
+  </div>
+  <div class="ls-feature">
+    <div class="ls-feature-num">03</div>
+    <h5>Éligibilité Automatique</h5>
+    <p>L'app synchronise votre calendrier de dons et gère le délai légal (56J homme / 84J femme) sans effort.</p>
+  </div>
+</div>
+
+<!-- ── ACTION CARDS ── -->
+<p class="ls-section-title ls-in-3">Accès rapide</p>
+<div class="row g-3 ls-in-3">
+  <div class="col-lg-6">
+    <div class="ls-action-card">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="ls-action-card-icon red"><i class="fas fa-ambulance"></i></div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div class="ls-live-dot"></div>
+          <span style="font-size:0.72rem; color:var(--ls-teal); font-weight:700; letter-spacing:0.06em;">LIVE</span>
+        </div>
+      </div>
+      <h4>Appels aux Dons Urgents</h4>
+      <p>Des hôpitaux ont un besoin critique en ce moment. Consultez les demandes actives et portez-vous volontaire si vous êtes compatible.</p>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a href="{% url 'blood_demandes' %}" class="ls-btn ls-btn-primary">
+          <i class="fas fa-list"></i> Voir les urgences
+        </a>
+        {% if is_hospital %}
+        <a href="{% url 'publish_request' %}" class="ls-btn ls-btn-ghost">
+          <i class="fas fa-plus"></i> Publier
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="ls-action-card">
+      <div class="ls-action-card-icon teal"><i class="fas fa-calendar-check"></i></div>
+      <h4>Campagnes de Collecte</h4>
+      <p>Events de collecte organisés par des hôpitaux partenaires. Réservez votre place avant qu'elles ne soient prises.</p>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a href="{% url 'blood_campaigns' %}" class="ls-btn ls-btn-primary">
+          <i class="fas fa-calendar-alt"></i> Voir les campagnes
+        </a>
+        {% if is_hospital %}
+        <a href="{% url 'publish_campaign' %}" class="ls-btn ls-btn-ghost">
+          <i class="fas fa-plus"></i> Créer
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

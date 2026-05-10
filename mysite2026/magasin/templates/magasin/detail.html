@@ -1,0 +1,334 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.libelle }} — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'index' %}"><i class="fas fa-shopping-bag me-1"></i>Catalogue</a>
+      </li>
+      {% if product.categorie %}
+      <li class="breadcrumb-item">
+        <a href="{% url 'index' %}?categorie={{ product.categorie.id }}">{{ product.categorie.name }}</a>
+      </li>
+      {% endif %}
+      <li class="breadcrumb-item active">{{ product.libelle }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+
+    <!-- Image -->
+    <div class="col-md-5">
+      <div class="card overflow-hidden">
+        <img src="{{ product.image_url }}"
+             class="w-100" style="height:380px;object-fit:cover;"
+             alt="{{ product.libelle }}">
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-body">
+
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% if product.categorie %}
+            <span class="badge bg-primary">{{ product.categorie.name }}</span>
+            {% endif %}
+            <span class="badge bg-info">{{ product.get_type_display }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-start">
+            <h2 class="mb-2">{{ product.libelle }}</h2>
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'wishlist_add' product.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Ajouter aux favoris">
+                <i class="fas fa-heart"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+
+          <p class="fs-3 fw-bold mb-2" style="color:var(--navy);">{{ product.prix }} DT</p>
+
+          {% if not product.is_active %}
+          <div class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>Ce produit est actuellement indisponible.
+          </div>
+          {% elif product.stock > 0 %}
+          <span class="badge bg-success mb-3"><i class="fas fa-check-circle me-1"></i>En stock ({{ product.stock }} disponibles)</span>
+          {% else %}
+          <span class="badge bg-danger mb-3"><i class="fas fa-times-circle me-1"></i>Rupture de stock</span>
+          {% endif %}
+
+          <div class="divider"></div>
+
+          <h6 class="form-label mb-2">Description</h6>
+          <p class="text-muted mb-4">{{ product.description }}</p>
+
+          {% if product.sources.exists %}
+          <div class="card border-0 p-3 mb-4" style="background:var(--bg-page);">
+            <h6 class="form-label mb-2"><i class="fas fa-truck me-2"></i>Nos Sources d'Approvisionnement</h6>
+            <div class="list-group list-group-flush bg-transparent">
+              {% for source in product.sources.all %}
+              <div class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-bold">{{ source.fournisseur.nom }}</span>
+                  <small class="text-muted d-block">Livraison sous {{ source.delai_livraison_jours }} jours</small>
+                </div>
+                <span class="badge bg-light text-dark border">{{ source.prix_achat }} DT (Achat)</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="d-flex gap-2 flex-wrap">
+
+            <!-- ── Real Add to Cart form ───────────────── -->
+            {% if product.is_active and product.stock > 0 %}
+            <form method="post" action="{% url 'panier_ajouter' product.id %}" class="flex-grow-1">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-shopping-cart"></i> Ajouter au panier
+              </button>
+            </form>
+            {% elif not product.is_active %}
+            <button class="btn btn-secondary btn-lg w-100" disabled>
+              <i class="fas fa-times-circle"></i> Produit indisponible
+            </button>
+            {% else %}
+            <button class="btn btn-secondary btn-lg w-100" disabled>
+              <i class="fas fa-times-circle"></i> Rupture de stock
+            </button>
+            {% endif %}
+
+            <a href="{% url 'panier_voir' %}" class="btn btn-outline-secondary btn-lg">
+              <i class="fas fa-shopping-cart"></i> Voir le panier
+            </a>
+
+            <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+
+            {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'produit_sources_manage' product.id %}" class="btn btn-outline-primary btn-lg">
+              <i class="fas fa-truck-loading me-2"></i>Gérer les fournisseurs
+            </a>
+            <a href="{% url 'produit_edit' product.id %}" class="btn btn-outline-secondary btn-lg">
+              <i class="fas fa-edit me-1"></i> Modifier
+            </a>
+            {% if user.is_superuser %}
+            <a href="{% url 'produit_delete' product.id %}" class="btn btn-outline-danger btn-lg">
+              <i class="fas fa-trash me-1"></i> Supprimer
+            </a>
+            {% endif %}
+            {% endif %}
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Recommended Products ───────────────────────────────── -->
+  {% if recommended %}
+  <div class="mt-4">
+    <h5 class="mb-3 fw-bold">
+      <i class="fas fa-thumbs-up me-2" style="color:var(--navy);"></i>Vous aimerez aussi
+    </h5>
+    <div class="recommended-scroll-wrapper">
+      <div class="recommended-scroll">
+        {% for p in recommended %}
+        <a href="{% url 'detail' p.pk %}" class="recommended-card text-decoration-none">
+          <div class="rec-img-wrap">
+            <img src="{{ p.image_url }}" alt="{{ p.libelle }}">
+          </div>
+          <div class="rec-info">
+            <p class="rec-name">{{ p.libelle }}</p>
+            <p class="rec-path text-muted small">{{ p.image }}</p>
+            <p class="rec-price fw-bold">{{ p.prix }} DT.</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Reviews Section -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-star me-2"></i>Avis ({{ reviews.count }})</h5>
+        </div>
+        <div class="card-body">
+          {% if reviews %}
+          <div class="row g-3 mb-4">
+            {% for review in reviews %}
+            <div class="col-md-6">
+              <div class="border rounded p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-bold">{{ review.user.username }}</span>
+                  <span class="text-warning">
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= review.rating %}<i class="fas fa-star"></i>{% else %}<i class="far fa-star"></i>{% endif %}
+                    {% endfor %}
+                  </span>
+                </div>
+                <p class="mb-0 text-muted">{{ review.comment|default:"(sans commentaire)" }}</p>
+                <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted">Aucun avis pour ce produit. Soyez le premier à donner votre avis!</p>
+          {% endif %}
+
+          {% if user.is_authenticated %}
+          <hr>
+          <h6>Ajouter un avis</h6>
+          <form method="post" action="{% url 'review_add' product.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Note</label>
+              <div class="star-rating">
+                {% for i in "12345" %}
+                <input type="radio" name="rating" id="star{{ forloop.counter }}" value="{{ forloop.counter }}" {% if user_review and user_review.rating == forloop.counter %}checked{% endif %}>
+                <label for="star{{ forloop.counter }}"><i class="fas fa-star"></i></label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Commentaire (optionnel)</label>
+              <textarea name="comment" class="form-control" rows="3" placeholder="Votre avis...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane me-1"></i> {% if user_review %}Mettre à jour{% else %}Envoyer{% endif %}
+            </button>
+          </form>
+          {% else %}
+          <p class="text-muted"><a href="{% url 'login' %}">Connectez-vous</a> pour donner votre avis.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.star-rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+.star-rating input {
+  display: none;
+}
+.star-rating label {
+  cursor: pointer;
+  color: #ddd;
+  font-size: 1.5rem;
+}
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #ffc107;
+}
+
+/* ── Recommended horizontal scroll ───────────────────── */
+.recommended-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 4px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+.recommended-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 3px;
+}
+.recommended-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  width: max-content;
+}
+.recommended-card {
+  display: flex;
+  flex-direction: column;
+  width: 160px;
+  border-right: 1px solid #e0e0e0;
+  padding: 10px;
+  color: inherit;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.recommended-card:last-child {
+  border-right: none;
+}
+.recommended-card:hover {
+  background: #f8f9fa;
+}
+.rec-img-wrap {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.rec-img-wrap img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.rec-info {
+  padding: 0 2px;
+}
+.rec-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-path {
+  font-size: 0.72rem;
+  color: #888 !important;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-price {
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 0;
+}
+</style>
+{% endblock %}

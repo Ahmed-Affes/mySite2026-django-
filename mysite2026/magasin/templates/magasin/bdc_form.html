@@ -1,0 +1,122 @@
+{% extends 'magasin/base.html' %}
+{% load static %}
+
+{% block title %}Nouveau BDC — MyMagasin{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice me-2"></i>Nouveau Bon de Commande</h2>
+        <a href="{% url 'bdc_liste' %}" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-4">
+            <!-- Header Info -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Informations Générales</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.non_field_errors }}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Fournisseur</label>
+                            {{ form.fournisseur }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Commande Client liée</label>
+                            {{ form.commande }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Notes / Instructions</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-lg shadow">Créer le Bon de Commande</button>
+            </div>
+
+            <!-- Items Formset -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Articles à commander</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.non_form_errors }}
+                        {{ formset.management_form }}
+                        <div id="formset-container">
+                            {% for f in formset %}
+                            <div class="form-row row g-3 mb-3 pb-3 border-bottom align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Produit</label>
+                                    {{ f.produit }}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Quantité</label>
+                                    {{ f.quantite }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Prix d'achat (estimé)</label>
+                                    {{ f.prix_achat }}
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    {% if formset.can_delete %}
+                                        <div class="form-check d-none">{{ f.DELETE }}</div>
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-row"><i class="fas fa-trash"></i></button>
+                                    {% endif %}
+                                </div>
+                                {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add-row" class="btn btn-sm btn-outline-dark mt-2">
+                            <i class="fas fa-plus me-1"></i> Ajouter une ligne
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple logic to add rows (basic version for demo, real enterprise would use a more robust JS script)
+    document.getElementById('add-row').addEventListener('click', function() {
+        const container = document.getElementById('formset-container');
+        const rows = container.getElementsByClassName('form-row');
+        const totalForms = document.getElementById('id_lignes-TOTAL_FORMS');
+        const newIndex = parseInt(totalForms.value);
+        
+        const newRow = rows[0].cloneNode(true);
+        const html = newRow.innerHTML.replace(/lignes-0-/g, `lignes-${newIndex}-`);
+        newRow.innerHTML = html;
+        
+        // Clear values and remove tom-select instances to avoid clones breaking
+        const inputs = newRow.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') input.value = '';
+            // Remove Tom Select classes so it can be re-initialized if needed
+            if (input.classList.contains('tom-selected')) {
+                // This is a bit complex with Tom Select, but for now we just clear the value
+                input.classList.remove('tom-selected');
+                // We might need to manually destroy and re-init, but let's try simple clone first
+            }
+        });
+        
+        container.appendChild(newRow);
+        totalForms.value = newIndex + 1;
+        
+        // Re-initialize Tom Select on new elements if needed
+        if (window.TomSelect) {
+            newRow.querySelectorAll('.tom-select').forEach(el => {
+                new TomSelect(el, { create: false, placeholder: 'Rechercher...' });
+            });
+        }
+    });
+</script>
+{% endblock %}

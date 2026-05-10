@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MyMagasin{% endblock %}</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Animate -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/base_v2.css' %}">
+
+  <!-- Tom Select (Searchable Dropdowns) -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+  <style>
+    .notification-dot {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        width: 8px;
+        height: 8px;
+        background: var(--danger);
+        border-radius: 50%;
+        border: 2px solid var(--surface);
+    }
+    .nav-link { position: relative; }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme');
+      if (!t) {
+        t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+
+<body class="dashboard-body">
+<div class="dashboard-layout">
+  <!-- ── SIDEBAR ────────────────────────────────────────── -->
+  {% block navbar %}
+  <aside class="dashboard-sidebar">
+    <div class="sidebar-inner">
+
+      <!-- Brand -->
+      <div class="d-flex align-items-center gap-2 mb-4">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'index' %}">
+          <span class="brand-icon shadow-glow"><i class="fas fa-store"></i></span>
+          <span class="text-gradient fw-bold h4 mb-0">MyMagasin</span>
+        </a>
+      </div>
+
+      <div class="sidebar-nav">
+        <ul class="navbar-nav gap-1">
+
+          {% if request.user.is_authenticated %}
+            
+            <li class="nav-header text-muted small uppercase fw-bold mt-2 mb-1 px-3" style="font-size: 0.65rem; letter-spacing: 0.05rem;">Navigation</li>
+
+            {# Catalogue #}
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'index' %}">
+                <i class="fas fa-shopping-bag"></i> Catalogue
+              </a>
+            </li>
+
+            {# Admin/Employé Sections #}
+            {% if request.user.is_staff or request.user.is_superuser or is_employe_user %}
+            <li class="nav-header text-muted small uppercase fw-bold mt-4 mb-1 px-3" style="font-size: 0.65rem; letter-spacing: 0.05rem;">Gestion Entreprise</li>
+            
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'toutes_commandes' or request.resolver_match.url_name == 'commande_detail' %}active{% endif %}" href="{% url 'toutes_commandes' %}">
+                <i class="fas fa-boxes"></i> Commandes Clients
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'bdc' in request.path %}active{% endif %}" href="{% url 'bdc_liste' %}">
+                <i class="fas fa-file-invoice"></i> Bons de Commande
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'fournisseurs' %}active{% endif %}" href="{% url 'fournisseurs' %}">
+                <i class="fas fa-truck"></i> Fournisseurs
+              </a>
+            </li>
+            {% endif %}
+
+            <li class="nav-header text-muted small uppercase fw-bold mt-4 mb-1 px-3" style="font-size: 0.65rem; letter-spacing: 0.05rem;">Mon Compte</li>
+
+            {# Client Sections #}
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" href="{% url 'notifications' %}">
+                <i class="fas fa-bell"></i> Notifications
+                {% if unread_notifications_count > 0 %}
+                    <span class="notification-dot"></span>
+                {% endif %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'panier_voir' %}active{% endif %}" href="{% url 'panier_voir' %}">
+                <i class="fas fa-shopping-cart"></i> Mon Panier
+                {% with p=request.session.panier %}{% if p %}<span class="badge bg-primary ms-auto" style="font-size:0.6rem;">{{ p|length }}</span>{% endif %}{% endwith %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'mes_commandes' %}active{% endif %}" href="{% url 'mes_commandes' %}">
+                <i class="fas fa-box"></i> Mes Commandes
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}" href="{% url 'wishlist' %}">
+                <i class="fas fa-heart"></i> Favoris
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}">
+                <i class="fas fa-user-circle"></i> Profil
+              </a>
+            </li>
+
+            <li class="nav-item mt-4">
+              <a href="{% url 'logout' %}" class="nav-link text-danger">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+              </a>
+            </li>
+
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">
+                <i class="fas fa-sign-in-alt"></i> Connexion
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'register' %}">
+                <i class="fas fa-user-plus"></i> Inscription
+              </a>
+            </li>
+          {% endif %}
+
+          <!-- Theme Toggle -->
+          <li class="nav-item mt-auto border-top pt-3">
+            <button id="themeToggle" class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+              <i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Mode Sombre</span>
+            </button>
+          </li>
+
+        </ul>
+      </div>
+    </div>
+  </aside>
+  {% endblock navbar %}
+
+  <div class="dashboard-main">
+
+  <!-- ── MESSAGES ──────────────────────────────────────── -->
+  {% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+      <i class="fas
+        {% if message.tags == 'success' %}fa-check-circle
+        {% elif message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-circle
+        {% elif message.tags == 'warning' %}fa-exclamation-triangle
+        {% else %}fa-info-circle{% endif %} me-2"></i>
+      {{ message }}
+      <button class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+  <main class="container mt-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── FOOTER ────────────────────────────────────────── -->
+  <footer class="text-center mt-auto py-4">
+    <p class="text-muted small mb-0">
+      <i class="fas fa-copyright"></i> {% now "Y" %} MyMagasin — Enterprise Solution
+      &nbsp;·&nbsp;
+      <a href="{% url 'home' %}" class="text-decoration-none"><i class="fas fa-th-large me-1"></i>Changer d'app</a>
+    </p>
+  </footer>
+  </div>
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var btn  = document.getElementById('themeToggle');
+      var icon = document.getElementById('themeIcon');
+      var text = document.getElementById('themeText');
+      var html = document.documentElement;
+
+      function syncUI() {
+        var dark = html.getAttribute('data-theme') === 'dark';
+        icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+        text.innerText = dark ? 'Mode Clair' : 'Mode Sombre';
+      }
+      syncUI();
+
+      btn.addEventListener('click', function () {
+        var newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        syncUI();
+      });
+    })();
+  </script>
+
+  {% block extra_js %}{% endblock %}
+
+  <!-- Initialize Tom Select -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.tom-select').forEach((el) => {
+            new TomSelect(el, {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: 'Rechercher...',
+            });
+        });
+    });
+  </script>
+</body>
+</html>
