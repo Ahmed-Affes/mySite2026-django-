@@ -27,11 +27,11 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
 
     # Suppliers
-    path('fournisseurs/',                     views.fournisseurs,      name='fournisseurs'),
-    path('fournisseurs/add/',                 views.fournisseur_create, name='fournisseur_create'),
-    path('fournisseurs/<int:pk>/detail/',     views.fournisseur_detail,  name='fournisseur_detail'),
-    path('fournisseurs/<int:pk>/edit/',       views.fournisseur_edit,   name='fournisseur_edit'),
-    path('fournisseurs/<int:pk>/delete/',     views.fournisseur_delete, name='fournisseur_delete'),
+    path('fournisseurs/',                     views.FournisseurListView.as_view(),   name='fournisseurs'),
+    path('fournisseurs/add/',                 views.FournisseurCreateView.as_view(), name='fournisseur_create'),
+    path('fournisseurs/<int:pk>/detail/',     views.FournisseurDetailView.as_view(),  name='fournisseur_detail'),
+    path('fournisseurs/<int:pk>/edit/',       views.FournisseurUpdateView.as_view(),   name='fournisseur_edit'),
+    path('fournisseurs/<int:pk>/delete/',     views.FournisseurDeleteView.as_view(), name='fournisseur_delete'),
 
     # Cart
     path('panier/',                           views.panier_voir,      name='panier_voir'),

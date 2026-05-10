@@ -24,6 +24,10 @@ from .forms import (
 )
 from .views_roles import employe_required, admin_required, is_employe
 
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+
 # ── DECORATORS ──────────────────────────────────────────────────────────
 
 def login_required(view_func):
@@ -619,62 +623,82 @@ def mes_commandes(request):
     commandes = Commande.objects.filter(client=request.user).prefetch_related('lignes__produit').order_by('-dateCde')
     return render(request, 'magasin/mes_commandes.html', {'commandes': commandes})
 
-@employe_required
-def fournisseurs(request):
-    qs = Fournisseur.objects.annotate(produits_count=Count('produits_proposes'))
-    search = request.GET.get('search', '').strip()
-    if search:
-        qs = qs.filter(Q(nom__icontains=search) | Q(email__icontains=search) | Q(adresse__icontains=search))
-    paginator = Paginator(qs, 10)
-    fournisseurs_page = paginator.get_page(request.GET.get('page', 1))
-    
-    context = {
-        'fournisseurs': fournisseurs_page,
-        'search': search,
-        'total_fournisseurs': Fournisseur.objects.count(),
-        'total_products': Produit.objects.count(),
-        'derniere_activite': Fournisseur.objects.order_by('-id').first().nom if Fournisseur.objects.exists() else None,
-    }
-    return render(request, 'magasin/fournisseurs.html', context)
+class FournisseurListView(ListView):
+    model = Fournisseur
+    template_name = 'magasin/fournisseurs.html'
+    context_object_name = 'fournisseurs'
+    paginate_by = 10
 
-@employe_required
-def fournisseur_create(request):
-    form = FournisseurForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Fournisseur ajouté.')
-        return redirect('fournisseurs')
-    return render(request, 'magasin/fournisseur_form.html', {'form': form, 'title': 'Nouveau fournisseur', 'submit_label': 'Ajouter'})
+    def get_queryset(self):
+        qs = Fournisseur.objects.annotate(produits_count=Count('produits_proposes'))
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            qs = qs.filter(Q(nom__icontains=search) | Q(email__icontains=search) | Q(adresse__icontains=search))
+        return qs
 
-@employe_required
-def fournisseur_edit(request, pk):
-    fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    form = FournisseurForm(request.POST or None, instance=fournisseur)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, f'Fournisseur «{fournisseur.nom}» modifié.')
-        return redirect('fournisseurs')
-    return render(request, 'magasin/fournisseur_form.html', {'form': form, 'title': f'Modifier : {fournisseur.nom}', 'submit_label': 'Enregistrer'})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search'] = self.request.GET.get('search', '').strip()
+        context['total_fournisseurs'] = Fournisseur.objects.count()
+        context['total_products'] = Produit.objects.count()
+        context['derniere_activite'] = Fournisseur.objects.order_by('-id').first().nom if Fournisseur.objects.exists() else None
+        return context
 
-@admin_required
-def fournisseur_delete(request, pk):
-    fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    if request.method == 'POST':
-        fournisseur.delete()
-        messages.success(request, 'Fournisseur supprimé.')
-        return redirect('fournisseurs')
-    return render(request, 'magasin/fournisseur_confirm_delete.html', {'fournisseur': fournisseur})
+@method_decorator(employe_required, name='dispatch')
+class FournisseurCreateView(CreateView):
+    model = Fournisseur
+    form_class = FournisseurForm
+    template_name = 'magasin/fournisseur_form.html'
+    success_url = reverse_lazy('fournisseurs')
 
-@employe_required
-def fournisseur_detail(request, pk):
-    fournisseur = get_object_or_404(Fournisseur, pk=pk)
-    products = Produit.objects.filter(fournisseurs=fournisseur).select_related('categorie')
-    bdcs = BonDeCommande.objects.filter(fournisseur=fournisseur).order_by('-date_creation')[:5]
-    return render(request, 'magasin/supplier_detail.html', {
-        'supplier': fournisseur,
-        'products': products,
-        'bdcs': bdcs,
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Nouveau fournisseur'
+        context['submit_label'] = 'Ajouter'
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Fournisseur ajouté.')
+        return super().form_valid(form)
+
+@method_decorator(employe_required, name='dispatch')
+class FournisseurUpdateView(UpdateView):
+    model = Fournisseur
+    form_class = FournisseurForm
+    template_name = 'magasin/fournisseur_form.html'
+    success_url = reverse_lazy('fournisseurs')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Modifier : {self.object.nom}'
+        context['submit_label'] = 'Enregistrer'
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Fournisseur «{self.object.nom}» modifié.')
+        return super().form_valid(form)
+
+@method_decorator(admin_required, name='dispatch')
+class FournisseurDeleteView(DeleteView):
+    model = Fournisseur
+    template_name = 'magasin/fournisseur_confirm_delete.html'
+    success_url = reverse_lazy('fournisseurs')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Fournisseur supprimé.')
+        return super().delete(request, *args, **kwargs)
+
+@method_decorator(employe_required, name='dispatch')
+class FournisseurDetailView(DetailView):
+    model = Fournisseur
+    template_name = 'magasin/supplier_detail.html'
+    context_object_name = 'supplier'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['products'] = Produit.objects.filter(fournisseurs=self.object).select_related('categorie')
+        context['bdcs'] = BonDeCommande.objects.filter(fournisseur=self.object).order_by('-date_creation')[:5]
+        return context
 
 @login_required
 def wishlist_view(request):
