@@ -1,4 +1,4 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -9,6 +9,7 @@ from .views import  home, register
 from . import views
 
 urlpatterns = [
+    path('api-auth/', include('rest_framework.urls')),
     path('', views.home, name='home'),
 
     path('register/', register, name='register'),

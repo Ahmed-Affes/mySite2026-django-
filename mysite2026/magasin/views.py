@@ -717,3 +717,29 @@ def review_add(request, pk):
         )
         messages.success(request, 'Avis enregistré.')
     return redirect('detail', pk=pk)
+
+# ============================================================
+# API REST FRAMEWORK - ViewSets
+# ============================================================
+
+from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from magasin.models import Categorie, Produit
+from magasin.serializers import CategorieSerializer, ProduitSerializer
+
+
+class CategorieViewSet(viewsets.ModelViewSet):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializer
+
+
+class ProduitViewSet(viewsets.ModelViewSet):
+    serializer_class = ProduitSerializer
+    
+    def get_queryset(self):
+        queryset = Produit.objects.all()
+        categorie_id = self.request.query_params.get('categorie_id', None)
+        if categorie_id is not None:
+            queryset = queryset.filter(categorie_id=categorie_id)
+        return queryset

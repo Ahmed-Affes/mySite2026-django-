@@ -1,8 +1,8 @@
-"""
+﻿"""
 magasin/urls.py  —  Enterprise URL patterns
 """
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -64,4 +64,19 @@ urlpatterns = [
 
     # Notifications
     path('notifications/', views.notifications_liste, name='notifications'),
+]
+
+# ============================================================
+# API REST FRAMEWORK - Router
+# ============================================================
+
+from rest_framework import routers
+from magasin.views import CategorieViewSet, ProduitViewSet
+
+router = routers.DefaultRouter()
+router.register('categorie', CategorieViewSet, basename='categorie')
+router.register('produit', ProduitViewSet, basename='produit')
+
+urlpatterns += [
+    path('api/', include(router.urls)),
 ]

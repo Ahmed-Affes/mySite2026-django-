@@ -1,0 +1,40 @@
+{% extends 'reddrop/base.html' %}
+{% block title %}Confirmer la suppression — BloodConnect{% endblock %}
+
+{% block content %}
+<div style="max-width:560px; margin:4rem auto;">
+
+  <!-- Header -->
+  <div style="text-align:center; margin-bottom:2rem;">
+    <div style="width:60px; height:60px; background:var(--ls-red); border-radius:12px;
+                display:inline-flex; align-items:center; justify-content:center;
+                font-size:1.5rem; color:#fff; margin-bottom:1rem;
+                box-shadow:0 0 24px var(--ls-red-glow);">
+      <i class="fas fa-trash-alt"></i>
+    </div>
+    <h2 style="font-size:1.8rem; font-weight:800; letter-spacing:-0.04em; margin-bottom:0.5rem; color: #fff;">Supprimer la demande ?</h2>
+    <p style="color: rgba(255,255,255,0.6); font-size: 0.95rem;">Cette action est irréversible et retirera immédiatement la demande du flux public.</p>
+  </div>
+
+  <div class="ls-panel">
+    <div class="ls-panel-body" style="text-align: center; padding: 2rem;">
+      <p style="font-size: 1.1rem; margin-bottom: 2rem; color: rgba(255,255,255,0.9); line-height: 1.6;">
+        Êtes-vous sûr de vouloir supprimer la demande urgente pour le groupe sanguin <strong style="color: var(--ls-red);">{{ object.groupe_sanguin }}</strong> ({{ object.quantite }} poche(s)) à {{ object.ville }} ?
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div style="display:flex; gap:1rem; justify-content: center;">
+          <a href="{% url 'blood_dashboard' %}" class="ls-btn ls-btn-ghost" style="flex:1; justify-content:center;">
+            <i class="fas fa-times"></i> Annuler
+          </a>
+          <button type="submit" class="ls-btn" style="flex:1; justify-content:center; background-color: var(--ls-red); color: #fff; border: none; padding:0.85rem; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 15px var(--ls-red-glow); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-trash-alt"></i> Confirmer la suppression
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -15,6 +15,11 @@ from .models import BLOOD_TYPE_CHOICES, Campagne, DemandeUrgente, Don, ReponseAp
 from .utils import get_compatible_receivers, get_compatible_donors
 from django.db import models
 
+# Class-Based Views and Mixins
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy
+
 
 def _is_hopital(request):
     return request.user.is_authenticated and hasattr(request.user, 'hopital_banque')
@@ -79,29 +84,61 @@ def register_hopital(request):
     return _register(request, HopitalRegistrationForm, 'Hôpital')
 
 
-def urgent_requests(request):
-    demandes = DemandeUrgente.objects.filter(active=True)
-    groupe = request.GET.get('groupe')
-    ville = request.GET.get('ville')
+class HospitalRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and hasattr(self.request.user, 'hopital_banque')
 
-    if groupe:
-        demandes = demandes.filter(groupe_sanguin=groupe)
-    if ville:
-        demandes = demandes.filter(ville__icontains=ville)
+    def handle_no_permission(self):
+        messages.warning(self.request, 'Seul un compte hôpital peut effectuer cette action.')
+        return redirect('blood_home')
 
-    compatible_types = []
-    if _is_donneur(request):
-        compatible_types = get_compatible_receivers(request.user.donneur_banque.groupe_sanguin)
 
-    return render(request, 'reddrop/urgent_requests.html', {
-        'demandes': demandes,
-        'groupe': groupe,
-        'ville': ville,
-        'blood_types': BLOOD_TYPE_CHOICES,
-        'can_respond': _is_donneur(request),
-        'is_hospital': _is_hopital(request),
-        'compatible_types': compatible_types,
-    })
+class DemandeUrgenteListView(ListView):
+    model = DemandeUrgente
+    template_name = 'reddrop/urgent_requests.html'
+    context_object_name = 'demandes'
+
+    def get_queryset(self):
+        queryset = DemandeUrgente.objects.filter(active=True)
+        groupe = self.request.GET.get('groupe')
+        ville = self.request.GET.get('ville')
+
+        if groupe:
+            queryset = queryset.filter(groupe_sanguin=groupe)
+        if ville:
+            queryset = queryset.filter(ville__icontains=ville)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['groupe'] = self.request.GET.get('groupe')
+        context['ville'] = self.request.GET.get('ville')
+        context['blood_types'] = BLOOD_TYPE_CHOICES
+        context['can_respond'] = _is_donneur(self.request)
+        context['is_hospital'] = _is_hopital(self.request)
+        
+        compatible_types = []
+        if _is_donneur(self.request):
+            compatible_types = get_compatible_receivers(self.request.user.donneur_banque.groupe_sanguin)
+        context['compatible_types'] = compatible_types
+        return context
+
+
+class DemandeUrgenteCreateView(HospitalRequiredMixin, CreateView):
+    model = DemandeUrgente
+    form_class = DemandeUrgenteForm
+    template_name = 'reddrop/request_form.html'
+    success_url = reverse_lazy('blood_demandes')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Publier une demande urgente'
+        return context
+
+    def form_valid(self, form):
+        form.instance.hopital = self.request.user.hopital_banque
+        messages.success(self.request, 'Demande urgente publiée.')
+        return super().form_valid(form)
 
 
 def campaigns(request):
@@ -109,26 +146,6 @@ def campaigns(request):
     return render(request, 'reddrop/campaigns.html', {
         'campagnes': campagnes,
         'can_publish': _is_hopital(request),
-    })
-
-
-@login_required
-def publish_request(request):
-    if not _is_hopital(request):
-        messages.warning(request, 'Seul un compte hôpital peut publier une demande.')
-        return redirect('blood_home')
-
-    form = DemandeUrgenteForm(request.POST or None)
-    if form.is_valid():
-        demande = form.save(commit=False)
-        demande.hopital = request.user.hopital_banque
-        demande.save()
-        messages.success(request, 'Demande urgente publiée.')
-        return redirect('blood_demandes')
-
-    return render(request, 'reddrop/request_form.html', {
-        'form': form,
-        'title': 'Publier une demande urgente',
     })
 
 
@@ -223,26 +240,36 @@ def participer_campagne(request, campagne_id):
         messages.error(request, 'Désolé, cette campagne est complète.')
         return redirect('blood_campaigns')
 
-@login_required
-def edit_request(request, pk):
-    if not _is_hopital(request):
-        return redirect('blood_home')
-    demande = get_object_or_404(DemandeUrgente, pk=pk, hopital=request.user.hopital_banque)
-    form = DemandeUrgenteForm(request.POST or None, instance=demande)
-    if form.is_valid():
-        form.save()
-        messages.success(request, 'Demande mise à jour.')
-        return redirect('blood_dashboard')
-    return render(request, 'reddrop/request_form.html', {'form': form, 'title': 'Modifier la demande'})
+class DemandeUrgenteUpdateView(HospitalRequiredMixin, UpdateView):
+    model = DemandeUrgente
+    form_class = DemandeUrgenteForm
+    template_name = 'reddrop/request_form.html'
+    success_url = reverse_lazy('blood_dashboard')
 
-@login_required
-def delete_request(request, pk):
-    if not _is_hopital(request):
-        return redirect('blood_home')
-    demande = get_object_or_404(DemandeUrgente, pk=pk, hopital=request.user.hopital_banque)
-    demande.delete()
-    messages.success(request, 'Demande supprimée.')
-    return redirect('blood_dashboard')
+    def get_queryset(self):
+        return DemandeUrgente.objects.filter(hopital=self.request.user.hopital_banque)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Modifier la demande'
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Demande mise à jour.')
+        return super().form_valid(form)
+
+
+class DemandeUrgenteDeleteView(HospitalRequiredMixin, DeleteView):
+    model = DemandeUrgente
+    template_name = 'reddrop/demandeurgente_confirm_delete.html'
+    success_url = reverse_lazy('blood_dashboard')
+
+    def get_queryset(self):
+        return DemandeUrgente.objects.filter(hopital=self.request.user.hopital_banque)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Demande supprimée.')
+        return super().delete(request, *args, **kwargs)
 
 @login_required
 def edit_campaign(request, pk):
@@ -521,3 +548,89 @@ def blood_statistics(request):
         }
     
     return render(request, 'reddrop/statistics.html', {'stats': stats})
+
+
+# ============================================================
+# API REST FRAMEWORK - ViewSets
+# ============================================================
+
+from rest_framework import viewsets
+from rest_framework.response import Response
+from .serializers import (
+    DonneurSerializer, HopitalSerializer, DemandeUrgenteSerializer,
+    CampagneSerializer, DonSerializer, ReponseAppelSerializer,
+    StockSangSerializer, RendezVousSerializer, TransfertStockSerializer,
+    NotificationSerializer, MessageSerializer
+)
+from .models import (
+    Donneur, Hopital, DemandeUrgente, Campagne, Don,
+    ReponseAppel, StockSang, RendezVous, TransfertStock,
+    Notification, Message
+)
+
+
+class DonneurViewSet(viewsets.ModelViewSet):
+    serializer_class = DonneurSerializer
+    queryset = Donneur.objects.all()
+
+
+class HopitalViewSet(viewsets.ModelViewSet):
+    serializer_class = HopitalSerializer
+    queryset = Hopital.objects.all()
+
+
+class DemandeUrgenteViewSet(viewsets.ModelViewSet):
+    serializer_class = DemandeUrgenteSerializer
+    
+    def get_queryset(self):
+        queryset = DemandeUrgente.objects.all()
+        groupe = self.request.query_params.get('groupe', None)
+        if groupe is not None:
+            queryset = queryset.filter(groupe_sanguin=groupe)
+        return queryset
+
+
+class CampagneViewSet(viewsets.ModelViewSet):
+    serializer_class = CampagneSerializer
+    
+    def get_queryset(self):
+        queryset = Campagne.objects.all()
+        lieu = self.request.query_params.get('lieu', None)
+        if lieu is not None:
+            queryset = queryset.filter(lieu__icontains=lieu)
+        return queryset
+
+
+class DonViewSet(viewsets.ModelViewSet):
+    serializer_class = DonSerializer
+    queryset = Don.objects.all()
+
+
+class ReponseAppelViewSet(viewsets.ModelViewSet):
+    serializer_class = ReponseAppelSerializer
+    queryset = ReponseAppel.objects.all()
+
+
+class StockSangViewSet(viewsets.ModelViewSet):
+    serializer_class = StockSangSerializer
+    queryset = StockSang.objects.all()
+
+
+class RendezVousViewSet(viewsets.ModelViewSet):
+    serializer_class = RendezVousSerializer
+    queryset = RendezVous.objects.all()
+
+
+class TransfertStockViewSet(viewsets.ModelViewSet):
+    serializer_class = TransfertStockSerializer
+    queryset = TransfertStock.objects.all()
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    queryset = Notification.objects.all()
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    serializer_class = MessageSerializer
+    queryset = Message.objects.all()
