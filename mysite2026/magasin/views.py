@@ -719,8 +719,6 @@ def review_add(request, pk):
     return redirect('detail', pk=pk)
 
 # ============================================================
-# API REST FRAMEWORK - ViewSets
-# ============================================================
 
 from rest_framework import viewsets
 from rest_framework.response import Response

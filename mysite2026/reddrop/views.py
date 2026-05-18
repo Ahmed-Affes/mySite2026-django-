@@ -26,7 +26,7 @@ def _is_hopital(request):
 
 
 def _is_donneur(request):
-    return request.user.is_authenticated and hasattr(request.user, 'donneur_banque')
+    return request.user.is_authenticated and hasattr(request.user, 'donneur_banque') and request.user.donneur_banque.actif
 
 
 def home(request):
@@ -86,10 +86,17 @@ def register_hopital(request):
 
 class HospitalRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_authenticated and hasattr(self.request.user, 'hopital_banque')
+        user = self.request.user
+        return (user.is_authenticated and 
+                hasattr(user, 'hopital_banque') and 
+                user.hopital_banque.valide)
 
     def handle_no_permission(self):
-        messages.warning(self.request, 'Seul un compte hôpital peut effectuer cette action.')
+        user = self.request.user
+        if user.is_authenticated and hasattr(user, 'hopital_banque') and not user.hopital_banque.valide:
+            messages.warning(self.request, "Votre compte hôpital n'est pas encore validé par l'administrateur.")
+            return redirect('blood_dashboard')
+        messages.warning(self.request, 'Seul un compte hôpital validé peut effectuer cette action.')
         return redirect('blood_home')
 
 
@@ -154,6 +161,9 @@ def publish_campaign(request):
     if not _is_hopital(request):
         messages.warning(request, 'Seul un hôpital peut créer une campagne.')
         return redirect('blood_home')
+    if not request.user.hopital_banque.valide:
+        messages.warning(request, "Votre compte hôpital n'est pas encore validé.")
+        return redirect('blood_dashboard')
 
     form = CampagneForm(request.POST or None)
     if form.is_valid():
@@ -445,6 +455,40 @@ def delete_conversation(request, user_id):
 def dashboard(request):
     notifications = Notification.objects.filter(user=request.user, lue=False)
 
+    if request.user.is_superuser or request.user.is_staff:
+        donneurs = Donneur.objects.all()
+        hopitaux = Hopital.objects.all()
+        demandes = DemandeUrgente.objects.all()
+        campagnes = Campagne.objects.all()
+        rdvs = RendezVous.objects.all()
+        transferts = TransfertStock.objects.all()
+
+        total_donneurs = donneurs.count()
+        total_hopitaux = hopitaux.count()
+        pending_hopitaux = hopitaux.filter(valide=False).count()
+        validated_hopitaux = hopitaux.filter(valide=True).count()
+        active_demandes = demandes.filter(active=True).count()
+        total_dons = Don.objects.count()
+        total_poches = StockSang.objects.filter(statut='OK').count()
+
+        return render(request, 'reddrop/dashboard.html', {
+            'type': 'admin',
+            'donneurs': donneurs,
+            'hopitaux': hopitaux,
+            'demandes': demandes,
+            'campagnes': campagnes,
+            'rdvs': rdvs,
+            'transferts': transferts,
+            'total_donneurs': total_donneurs,
+            'total_hopitaux': total_hopitaux,
+            'pending_hopitaux': pending_hopitaux,
+            'validated_hopitaux': validated_hopitaux,
+            'active_demandes': active_demandes,
+            'total_dons': total_dons,
+            'total_poches': total_poches,
+            'notifications': notifications,
+        })
+
     if _is_donneur(request):
         donneur = request.user.donneur_banque
         compatible_types = get_compatible_receivers(donneur.groupe_sanguin)
@@ -476,11 +520,68 @@ def dashboard(request):
             'notifications': notifications,
         })
 
-    if request.user.is_superuser:
-        return redirect('/admin/')
-
     messages.warning(request, "Votre compte n'est ni configuré en Hôpital ni en Donneur. Veuillez vous déconnecter.")
     return render(request, 'reddrop/dashboard.html', {'type': 'none'})
+
+@login_required
+def admin_toggle_hospital_validation(request, pk):
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, "Accès refusé.")
+        return redirect('blood_home')
+    
+    hopital = get_object_or_404(Hopital, pk=pk)
+    hopital.valide = not hopital.valide
+    hopital.save()
+    
+    status_str = "validé" if hopital.valide else "suspendu"
+    messages.success(request, f"L'hôpital '{hopital.nom}' a été {status_str} avec succès.")
+    
+    # Create notification for the hospital
+    Notification.objects.create(
+        user=hopital.user,
+        titre="Statut de votre compte mis à jour",
+        message=f"Votre compte hôpital a été {status_str} par l'administration.",
+        lien="/dashboard/"
+    )
+    
+    return redirect('blood_dashboard')
+
+@login_required
+def admin_toggle_donneur_status(request, pk):
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, "Accès refusé.")
+        return redirect('blood_home')
+    
+    donneur = get_object_or_404(Donneur, pk=pk)
+    donneur.actif = not donneur.actif
+    donneur.save()
+    
+    status_str = "activé" if donneur.actif else "désactivé"
+    messages.success(request, f"Le donneur '{donneur.user.username}' a été {status_str} avec succès.")
+    
+    # Create notification for the donor
+    Notification.objects.create(
+        user=donneur.user,
+        titre="Statut de votre compte mis à jour",
+        message=f"Votre compte donneur a été {status_str} par l'administration.",
+        lien="/dashboard/"
+    )
+    
+    return redirect('blood_dashboard')
+
+@login_required
+def admin_delete_user(request, pk):
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, "Accès refusé.")
+        return redirect('blood_home')
+    
+    from django.contrib.auth.models import User
+    user_to_delete = get_object_or_404(User, pk=pk)
+    username = user_to_delete.username
+    user_to_delete.delete()
+    
+    messages.success(request, f"L'utilisateur '{username}' et toutes ses données associées ont été supprimés.")
+    return redirect('blood_dashboard')
 @login_required
 def blood_statistics(request):
     """View to display detailed analytics for both Donors and Hospitals."""
@@ -549,9 +650,6 @@ def blood_statistics(request):
     
     return render(request, 'reddrop/statistics.html', {'stats': stats})
 
-
-# ============================================================
-# API REST FRAMEWORK - ViewSets
 # ============================================================
 
 from rest_framework import viewsets

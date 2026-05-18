@@ -30,10 +30,12 @@ urlpatterns = [
     path('don/<int:pk>/supprimer/', views.delete_don, name='delete_don'),
     path('notifications/tout-effacer/', views.clear_notifications, name='clear_notifications'),
     path('statistiques/', views.blood_statistics, name='blood_statistics'),
+    # Admin Portal Actions
+    path('admin-portal/hopital/<int:pk>/valider/', views.admin_toggle_hospital_validation, name='admin_toggle_hospital'),
+    path('admin-portal/donneur/<int:pk>/actif/', views.admin_toggle_donneur_status, name='admin_toggle_donneur'),
+    path('admin-portal/user/<int:pk>/supprimer/', views.admin_delete_user, name='admin_delete_user'),
 ]
 
-# ============================================================
-# API REST FRAMEWORK - Router
 # ============================================================
 
 from django.urls import include

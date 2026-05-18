@@ -2,6 +2,51 @@
 {% load static %}
 {% block title %}Dashboard — BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+.ls-nav-tabs {
+  border-bottom: 1px solid var(--ls-border) !important;
+}
+.ls-tab-btn {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--ls-muted) !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: var(--ls-radius-sm) var(--ls-radius-sm) 0 0 !important;
+  transition: all 0.25s !important;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.ls-tab-btn:hover {
+  color: var(--ls-text) !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+.ls-tab-btn.active {
+  color: var(--ls-red) !important;
+  border-color: var(--ls-border) var(--ls-border) var(--ls-bg) !important;
+  background: var(--ls-surface) !important;
+  border-bottom: 2px solid var(--ls-red) !important;
+}
+.ls-btn-suspend {
+  color: var(--ls-orange) !important;
+  border-color: rgba(255, 107, 53, 0.2) !important;
+}
+.ls-btn-suspend:hover {
+  background: rgba(255, 107, 53, 0.08) !important;
+  border-color: rgba(255, 107, 53, 0.4) !important;
+}
+.ls-btn-activate {
+  color: var(--ls-teal) !important;
+  border-color: rgba(0, 212, 170, 0.2) !important;
+}
+.ls-btn-activate:hover {
+  background: rgba(0, 212, 170, 0.08) !important;
+  border-color: rgba(0, 212, 170, 0.4) !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 
 {% if type == 'donneur' %}
@@ -259,7 +304,7 @@
 </div>
 
 
-{% else %}
+{% elif type == 'hopital' %}
 <!-- ════ HOSPITAL DASHBOARD ════ -->
 
 <!-- Header -->
@@ -509,6 +554,312 @@
     </div>
   </div>
 
+</div>
+{% elif type == 'admin' %}
+<!-- ════ ADMIN DASHBOARD ════ -->
+
+<div class="ls-in" style="margin-bottom: 2rem;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p class="ls-section-title" style="margin-bottom:0.3rem;">Console d'Administration</p>
+      <h1 style="font-size:2.2rem; font-weight:800; letter-spacing:-0.05em; margin:0;">
+        Bonjour, <span style="color:var(--ls-red);">{{ request.user.username }}</span> 👑
+      </h1>
+      <p style="color: var(--ls-muted); font-size: 0.9rem; margin-top: 4px;">Contrôle global et supervision de la plateforme RedDrop</p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a href="/admin/" class="ls-btn ls-btn-ghost" target="_blank">
+        <i class="fas fa-cog"></i> Django Admin
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stat Strip -->
+<div class="ls-stat-strip ls-in-2" style="grid-template-columns: repeat(4, 1fr);">
+  <div class="ls-stat">
+    <div class="ls-stat-num">{{ total_donneurs }}</div>
+    <div class="ls-stat-label">Donneurs Inscrits</div>
+    <i class="fas fa-users ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat teal">
+    <div class="ls-stat-num">{{ total_hopitaux }}</div>
+    <div class="ls-stat-label">
+      Hôpitaux ({{ validated_hopitaux }} validés, <span style="color: var(--ls-orange);">{{ pending_hopitaux }} en attente</span>)
+    </div>
+    <i class="fas fa-hospital ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat orange">
+    <div class="ls-stat-num">{{ active_demandes }}</div>
+    <div class="ls-stat-label">Urgences Actives</div>
+    <i class="fas fa-ambulance ls-stat-icon"></i>
+  </div>
+  <div class="ls-stat teal">
+    <div class="ls-stat-num">{{ total_poches }}</div>
+    <div class="ls-stat-label">Poches en Stock (OK)</div>
+    <i class="fas fa-tint ls-stat-icon"></i>
+  </div>
+</div>
+
+<!-- Admin Tab System -->
+<div class="ls-panel ls-in-3" style="margin-bottom: 2rem;">
+  <div class="ls-panel-head" style="padding-bottom: 0; background: transparent; border-bottom: none;">
+    <ul class="nav nav-tabs ls-nav-tabs" id="adminTabs" role="tablist" style="width: 100%;">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active ls-tab-btn" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">
+          <i class="fas fa-clock" style="margin-right: 6px;"></i>En Attente
+          {% if pending_hopitaux > 0 %}
+          <span class="badge bg-danger" style="margin-left: 6px; font-size: 0.68rem; padding: 0.2rem 0.4rem; border-radius: 50px; animation: blink 1.4s infinite;">{{ pending_hopitaux }}</span>
+          {% endif %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link ls-tab-btn" id="hospitals-tab" data-bs-toggle="tab" data-bs-target="#hospitals" type="button" role="tab" aria-controls="hospitals" aria-selected="false">
+          <i class="fas fa-hospital" style="margin-right: 6px;"></i>Hôpitaux ({{ total_hopitaux }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link ls-tab-btn" id="donors-tab" data-bs-toggle="tab" data-bs-target="#donors" type="button" role="tab" aria-controls="donors" aria-selected="false">
+          <i class="fas fa-users" style="margin-right: 6px;"></i>Donneurs ({{ total_donneurs }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link ls-tab-btn" id="transferts-tab" data-bs-toggle="tab" data-bs-target="#transferts-pane" type="button" role="tab" aria-controls="transferts-pane" aria-selected="false">
+          <i class="fas fa-exchange-alt" style="margin-right: 6px;"></i>Urgences & Transferts
+        </button>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="ls-panel-body flush">
+    <div class="tab-content" id="adminTabsContent" style="padding: 1.5rem;">
+      
+      <!-- TAB A: PENDING HOSPITALS -->
+      <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+        <h5 style="font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-hourglass-half" style="color: var(--ls-orange); margin-right: 8px;"></i>Hôpitaux en attente d'approbation</h5>
+        {% if pending_hopitaux > 0 %}
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <th style="padding:0.9rem 1.5rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Nom</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Ville</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">N° Agrément</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Adresse</th>
+                <th style="padding:0.9rem 1.5rem 0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hopital in hopitaux %}
+                {% if not hopital.valide %}
+                <tr style="border-bottom:1px solid var(--ls-border); transition:background 0.15s;" onmouseover="this.style.background='var(--ls-panel)'" onmouseout="this.style.background='transparent'">
+                  <td style="padding:0.85rem 1.5rem; color:var(--ls-text); font-weight: 700;">{{ hopital.nom }}</td>
+                  <td style="padding:0.85rem 1rem; color:var(--ls-muted);">{{ hopital.ville }}</td>
+                  <td style="padding:0.85rem 1rem; color:var(--ls-text); font-family: monospace;">{{ hopital.numero_agrement }}</td>
+                  <td style="padding:0.85rem 1rem; color:var(--ls-muted); font-size: 0.8rem;">{{ hopital.adresse|truncatechars:40 }}</td>
+                  <td style="padding:0.85rem 1.5rem 0.85rem 1rem; text-align:right; display:flex; gap: 0.5rem; justify-content: flex-end;">
+                    <a href="{% url 'admin_toggle_hospital' hopital.pk %}" class="ls-btn ls-btn-primary ls-btn-sm" style="background: var(--ls-teal); border:none; box-shadow: none;">
+                      <i class="fas fa-check"></i> Valider
+                    </a>
+                    <a href="{% url 'admin_delete_user' hopital.user.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); border-color: rgba(232, 25, 44, 0.2);" onclick="return confirm('Voulez-vous vraiment supprimer définitivement ce compte hôpital ?')">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="ls-empty" style="padding: 3rem 1rem;">
+          <div class="ls-empty-icon" style="background: rgba(0, 212, 170, 0.08); color: var(--ls-teal); opacity: 1;"><i class="fas fa-check-double"></i></div>
+          <strong>Aucun hôpital en attente</strong>
+          <p>Tous les hôpitaux inscrits ont été validés.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB B: ALL HOSPITALS -->
+      <div class="tab-pane fade" id="hospitals" role="tabpanel" aria-labelledby="hospitals-tab">
+        <h5 style="font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-hospital" style="color: var(--ls-teal); margin-right: 8px;"></i>Liste globale des hôpitaux</h5>
+        {% if hopitaux %}
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <th style="padding:0.9rem 1.5rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Nom</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Ville</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">N° Agrément</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Statut</th>
+                <th style="padding:0.9rem 1.5rem 0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hopital in hopitaux %}
+              <tr style="border-bottom:1px solid var(--ls-border); transition:background 0.15s;" onmouseover="this.style.background='var(--ls-panel)'" onmouseout="this.style.background='transparent'">
+                <td style="padding:0.85rem 1.5rem; color:var(--ls-text); font-weight: 700;">{{ hopital.nom }}</td>
+                <td style="padding:0.85rem 1rem; color:var(--ls-muted);">{{ hopital.ville }}</td>
+                <td style="padding:0.85rem 1rem; color:var(--ls-text); font-family: monospace;">{{ hopital.numero_agrement }}</td>
+                <td style="padding:0.85rem 1rem;">
+                  {% if hopital.valide %}
+                  <span class="ls-pill ls-pill-teal"><i class="fas fa-check-circle" style="margin-right: 4px;"></i>Validé</span>
+                  {% else %}
+                  <span class="ls-pill ls-pill-orange"><i class="fas fa-hourglass-half" style="margin-right: 4px;"></i>En Attente</span>
+                  {% endif %}
+                </td>
+                <td style="padding:0.85rem 1.5rem 0.85rem 1rem; text-align:right; display:flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                  <a href="{% url 'admin_toggle_hospital' hopital.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm {% if hopital.valide %}ls-btn-suspend{% else %}ls-btn-activate{% endif %}">
+                    {% if hopital.valide %}
+                    <i class="fas fa-ban"></i> Suspendre
+                    {% else %}
+                    <i class="fas fa-check"></i> Activer
+                    {% endif %}
+                  </a>
+                  <a href="{% url 'admin_delete_user' hopital.user.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); border-color: rgba(232, 25, 44, 0.2);" onclick="return confirm('Voulez-vous vraiment supprimer définitivement ce compte hôpital et toutes ses demandes/campagnes ?')">
+                    <i class="fas fa-trash"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="ls-empty">
+          <div class="ls-empty-icon"><i class="fas fa-hospital"></i></div>
+          <p>Aucun hôpital inscrit sur la plateforme.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB C: ALL DONORS -->
+      <div class="tab-pane fade" id="donors" role="tabpanel" aria-labelledby="donors-tab">
+        <h5 style="font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-users" style="color: var(--ls-red); margin-right: 8px;"></i>Liste globale des donneurs</h5>
+        {% if donneurs %}
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <th style="padding:0.9rem 1.5rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Nom d'utilisateur</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Groupe Sanguin</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Sexe</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Ville</th>
+                <th style="padding:0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:left;">Statut</th>
+                <th style="padding:0.9rem 1.5rem 0.9rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ls-muted); text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for donneur in donneurs %}
+              <tr style="border-bottom:1px solid var(--ls-border); transition:background 0.15s;" onmouseover="this.style.background='var(--ls-panel)'" onmouseout="this.style.background='transparent'">
+                <td style="padding:0.85rem 1.5rem; color:var(--ls-text); font-weight: 700;">{{ donneur.user.username }}</td>
+                <td style="padding:0.85rem 1rem;"><span class="ls-blood-tag sm">{{ donneur.groupe_sanguin }}</span></td>
+                <td style="padding:0.85rem 1rem; color:var(--ls-muted);">{{ donneur.get_sexe_display }}</td>
+                <td style="padding:0.85rem 1rem; color:var(--ls-text);">{{ donneur.ville }}</td>
+                <td style="padding:0.85rem 1rem;">
+                  {% if donneur.actif %}
+                  <span class="ls-pill ls-pill-teal"><i class="fas fa-check-circle" style="margin-right: 4px;"></i>Actif</span>
+                  {% else %}
+                  <span class="ls-pill ls-pill-grey"><i class="fas fa-ban" style="margin-right: 4px;"></i>Désactivé</span>
+                  {% endif %}
+                </td>
+                <td style="padding:0.85rem 1.5rem 0.85rem 1rem; text-align:right; display:flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                  <a href="{% url 'admin_toggle_donneur' donneur.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm {% if donneur.actif %}ls-btn-suspend{% else %}ls-btn-activate{% endif %}">
+                    {% if donneur.actif %}
+                    <i class="fas fa-user-slash"></i> Désactiver
+                    {% else %}
+                    <i class="fas fa-user-check"></i> Activer
+                    {% endif %}
+                  </a>
+                  <a href="{% url 'admin_delete_user' donneur.user.pk %}" class="ls-btn ls-btn-ghost ls-btn-sm" style="color:var(--ls-red); border-color: rgba(232, 25, 44, 0.2);" onclick="return confirm('Voulez-vous vraiment supprimer définitivement ce compte donneur et tout son historique de dons ?')">
+                    <i class="fas fa-trash"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="ls-empty">
+          <div class="ls-empty-icon"><i class="fas fa-users-slash"></i></div>
+          <p>Aucun donneur inscrit pour le moment.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB D: TRANSFERTS ET URGENCES -->
+      <div class="tab-pane fade" id="transferts-pane" role="tabpanel" aria-labelledby="transferts-tab">
+        <div class="row g-4">
+          <!-- Col 1: Urgent Requests -->
+          <div class="col-md-6">
+            <h5 style="font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-ambulance" style="color: var(--ls-red); margin-right: 8px;"></i>Urgences Actives</h5>
+            {% if demandes %}
+              <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--ls-border); border-radius: var(--ls-radius-sm); background: rgba(0,0,0,0.15);">
+                {% for demande in demandes %}
+                  <div class="ls-request-row" style="background: transparent;">
+                    <span class="ls-blood-tag sm">{{ demande.groupe_sanguin }}</span>
+                    <div style="flex-grow: 1; min-width: 0;">
+                      <div style="font-weight: 700; font-size: 0.88rem;">{{ demande.hopital.nom }}</div>
+                      <div style="font-size: 0.75rem; color: var(--ls-muted);">{{ demande.ville }} · {{ demande.quantite }} poches · {{ demande.delai }}j</div>
+                    </div>
+                    <span class="ls-pill {% if demande.active %}ls-pill-red{% else %}ls-pill-grey{% endif %}" style="font-size: 0.65rem;">
+                      {% if demande.active %}Active{% else %}Fermée{% endif %}
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="ls-empty" style="padding: 2rem;">
+                <p>Aucune demande urgente publiée.</p>
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Col 2: Stock Transfer Requests -->
+          <div class="col-md-6">
+            <h5 style="font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-exchange-alt" style="color: var(--ls-orange); margin-right: 8px;"></i>Transferts de Stock</h5>
+            {% if transferts %}
+              <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--ls-border); border-radius: var(--ls-radius-sm); background: rgba(0,0,0,0.15);">
+                {% for trans in transferts %}
+                  <div class="ls-request-row" style="background: transparent; align-items: flex-start; flex-direction: column; gap: 4px; padding: 1rem;">
+                    <div style="display:flex; width: 100%; justify-content: space-between; align-items: center;">
+                      <span class="ls-blood-tag sm">{{ trans.groupe_sanguin }}</span>
+                      <span class="ls-pill {% if trans.statut == 'ATT' %}ls-pill-orange{% elif trans.statut == 'APP' %}ls-pill-teal{% elif trans.statut == 'REJ' %}ls-pill-red{% else %}ls-pill-grey{% endif %}" style="font-size: 0.65rem;">
+                        {{ trans.get_statut_display }}
+                      </span>
+                    </div>
+                    <div style="font-size: 0.85rem; margin-top: 4px;">
+                      <strong>Demandeur:</strong> {{ trans.hopital_demandeur.nom }}<br>
+                      <strong>Fournisseur:</strong> {{ trans.hopital_fournisseur.nom }}<br>
+                      <strong>Quantité:</strong> {{ trans.quantite }} poche(s)
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--ls-muted); margin-top: 4px; width: 100%; text-align: right;">
+                      {{ trans.date_demande|date:"d/m/Y H:i" }}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="ls-empty" style="padding: 2rem;">
+                <p>Aucun transfert de stock enregistré.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- ════ NONE DASHBOARD ════ -->
+<div class="ls-in" style="margin-bottom: 2rem; text-align: center; padding: 4rem 2rem;">
+  <div class="ls-empty-icon" style="margin: 0 auto 1.5rem;"><i class="fas fa-exclamation-triangle"></i></div>
+  <h1 style="font-size:2rem; font-weight:800; letter-spacing:-0.05em; margin-bottom: 1rem;">Compte non configuré</h1>
+  <p style="color:var(--ls-muted); max-width: 500px; margin: 0 auto 2rem;">Votre compte n'est pas encore configuré comme Donneurs ou Hôpital. Veuillez contacter l'administration ou vous reconnecter.</p>
+  <a href="{% url 'blood_logout' %}" class="ls-btn ls-btn-primary"><i class="fas fa-sign-out-alt"></i> Se déconnecter</a>
 </div>
 {% endif %}
 
